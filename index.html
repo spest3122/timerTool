@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>German Time Trainer</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: row;
+            gap: 40px;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* Responsive Wrapper for the SVG Analog Clock */
+        .clock-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            aspect-ratio: 1 / 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        svg {
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Responsive Layout Container for UI Text/Controls */
+        .info {
+            width: 100%;
+            max-width: 380px;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        .digital-time {
+            font-size: 40px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        /* Mode Indicator Styles */
+        .mode-status {
+            align-self: center;
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .mode-practice {
+            background-color: #ffe0b2;
+            color: #e65100;
+        }
+
+        .mode-live {
+            background-color: #c8e6c9;
+            color: #1b5e20;
+        }
+
+        /* Voice Selection Controls */
+        .voice-selector-container {
+            margin-bottom: 20px;
+            background: #ffffff;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .voice-selector-container label {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #666;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        .voice-selector-container select {
+            width: 100%;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            background: #fafafa;
+            font-size: 14px;
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+
+        #hourHand,
+        #minuteHand {
+            cursor: grab;
+        }
+
+        #hourHand:active,
+        #minuteHand:active {
+            cursor: grabbing;
+        }
+
+        .phrase-section-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #666;
+            margin-top: 15px;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        /* BUG FIX 2: Fixed phrase container font size strictly to 14px */
+        .phrase {
+            background: white;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            font-size: 14px;
+        }
+
+        .control-btns {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+
+        /* Base mode switching button layouts */
+        .control-btns button {
+            flex: 1;
+            border: none;
+            background: #1976d2;
+            color: white;
+            padding: 12px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            text-align: center;
+            touch-action: manipulation;
+        }
+
+        /* BUG FIX 1: Overrode width logic for speak buttons specifically so they aren't too wide */
+        .phrase button {
+            flex: 0 0 auto;
+            width: auto;
+            border: none;
+            background: #1976d2;
+            color: white;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            text-align: center;
+            touch-action: manipulation;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        /* RESPONSIVE WEB DESIGN MEDIA QUERIES FOR PHONES */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                justify-content: flex-start;
+                gap: 20px;
+                padding: 15px;
+            }
+
+            .clock-wrapper {
+                max-width: 320px;
+            }
+
+            .digital-time {
+                font-size: 34px;
+                margin-bottom: 5px;
+            }
+
+            .info {
+                max-width: 100%;
+            }
+
+            /* BUG FIX 2: Maintained explicit 14px setting over mobile overrides */
+            .phrase {
+                padding: 10px 12px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="clock-wrapper">
+            <svg id="clock" viewBox="0 0 400 400" width="400" height="400">
+                <circle cx="200" cy="200" r="180" fill="white" stroke="#333" stroke-width="3" />
+
+                <g id="numbers"></g>
+
+                <line id="hourHand" x1="200" y1="200" x2="200" y2="110" stroke="#222" stroke-width="12"
+                    stroke-linecap="round" />
+
+                <line id="minuteHand" x1="200" y1="200" x2="200" y2="70" stroke="#1976d2" stroke-width="10"
+                    stroke-linecap="round" />
+
+                <circle cx="200" cy="200" r="8" fill="#333" />
+            </svg>
+        </div>
+
+        <div class="info">
+            <div id="digitalTime" class="digital-time"></div>
+
+            <!-- Current Mode Status Indicator -->
+            <div id="modeIndicator" class="mode-status mode-practice">Mode: Practice Mode</div>
+
+            <!-- Browser German Voice Configuration Selector Dropdown -->
+            <div class="voice-selector-container">
+                <label for="voiceSelect">Stimme auswählen (German Voice)</label>
+                <select id="voiceSelect">
+                    <option value="">System Default German Voice</option>
+                </select>
+            </div>
+
+            <div id="phrases"></div>
+
+            <div class="control-btns">
+                <button id="liveModeBtn">Live Clock</button>
+                <button id="practiceModeBtn">Practice Mode</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+
+        const center = 200;
+
+        const clock = document.getElementById("clock");
+        const hourHand = document.getElementById("hourHand");
+        const minuteHand = document.getElementById("minuteHand");
+        const voiceSelect = document.getElementById("voiceSelect");
+        const modeIndicator = document.getElementById("modeIndicator");
+
+        let totalMinutes = 19 * 60 + 40; // Defaulting to 19:40 / 7:40 PM sample
+        let lastMinuteAngle = null;
+        let liveMode = false;
+        let liveTimer = null;
+        let dragging = null;
+
+        let germanVoices = [];
+
+        function loadGermanVoices() {
+            if (typeof speechSynthesis === "undefined") return;
+
+            const allVoices = speechSynthesis.getVoices();
+
+            germanVoices = allVoices.filter(voice =>
+                voice.lang.startsWith("de-") || voice.lang.toLowerCase() === "de"
+            );
+
+            const currentSelection = voiceSelect.value;
+            voiceSelect.innerHTML = "";
+
+            if (germanVoices.length === 0) {
+                const opt = document.createElement("option");
+                opt.textContent = "No German voices found (Using standard default)";
+                opt.value = "";
+                voiceSelect.appendChild(opt);
+                return;
+            }
+
+            germanVoices.forEach((voice, index) => {
+                const option = document.createElement("option");
+                option.value = index;
+                option.textContent = `${voice.name} (${voice.lang})`;
+
+                if (currentSelection !== "" && parseInt(currentSelection) === index) {
+                    option.selected = true;
+                }
+                voiceSelect.appendChild(option);
+            });
+        }
+
+        if (typeof speechSynthesis !== "undefined" && speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = loadGermanVoices;
+        }
+        loadGermanVoices();
+
+        const dialGermanWords = [
+            "", "eins", "zwei", "drei", "vier", "fünf", "sechs",
+            "sieben", "acht", "neun", "zehn", "elf", "zwölf"
+        ];
+
+        for (let i = 1; i <= 12; i++) {
+            const angle = (i * 30 - 90) * Math.PI / 180;
+            const xNum = center + Math.cos(angle) * 155;
+            const yNum = center + Math.sin(angle) * 155;
+            const xWord = center + Math.cos(angle) * 130;
+            const yWord = center + Math.sin(angle) * 130;
+
+            const gGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+
+            const textNum = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            textNum.setAttribute("x", xNum);
+            textNum.setAttribute("y", yNum + 5);
+            textNum.setAttribute("text-anchor", "middle");
+            textNum.setAttribute("font-size", "18");
+            textNum.setAttribute("font-weight", "bold");
+            textNum.textContent = i;
+            gGroup.appendChild(textNum);
+
+            const textWord = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            textWord.setAttribute("x", xWord);
+            textWord.setAttribute("y", yWord + 4);
+            textWord.setAttribute("text-anchor", "middle");
+            textWord.setAttribute("font-size", "11");
+            textWord.setAttribute("fill", "#555");
+            textWord.textContent = dialGermanWords[i];
+            gGroup.appendChild(textWord);
+
+            numbers.appendChild(gGroup);
+        }
+
+        function syncWithCurrentTime() {
+            const now = new Date();
+            totalMinutes = now.getHours() * 60 + now.getMinutes();
+            updateClock();
+        }
+
+        function germanHour(h) {
+            const arr = [
+                "null", "eins", "zwei", "drei", "vier", "fünf", "sechs", "sieben",
+                "acht", "neun", "zehn", "elf", "zwölf", "dreizehn", "vierzehn",
+                "fünfzehn", "sechzehn", "siebzehn", "achtzehn", "neunzehn",
+                "zwanzig", "einundzwanzig", "zweiundzwanzig", "dreiundzwanzig"
+            ];
+            return arr[h] || h;
+        }
+
+        function germanMinuteSpelled(m) {
+            if (m === 0) return "null";
+            const ones = ["", "eins", "zwei", "drei", "vier", "fünf", "sechs", "sieben", "acht", "neun"];
+            const teens = ["zehn", "elf", "zwölf", "dreizehn", "vierzehn", "fünfzehn", "sechzehn", "siebzehn", "achtzehn", "neunzehn"];
+            const tens = ["", "", "zwanzig", "dreißig", "vierzig", "fünfzig"];
+
+            if (m < 10) return ones[m];
+            if (m >= 10 && m < 20) return teens[m - 10];
+
+            const onesDigit = m % 10;
+            const tensDigit = Math.floor(m / 10);
+
+            if (onesDigit === 0) {
+                return tens[tensDigit];
+            } else {
+                const onesWord = onesDigit === 1 ? "ein" : ones[onesDigit];
+                return onesWord + "und" + tens[tensDigit];
+            }
+        }
+
+        function buildGermanTimeCategories(h, m) {
+            const current12Hour = h % 12 || 12;
+            let next12Hour = (current12Hour % 12) + 1;
+            const current24Hour = h % 24;
+
+            const categories = {
+                official12: `${germanHour(current12Hour)} Uhr ${m === 0 ? "" : germanMinuteSpelled(m)}`.trim(),
+                official24: `${germanHour(current24Hour)} Uhr ${m === 0 ? "" : germanMinuteSpelled(m)}`.trim(),
+                informal: []
+            };
+
+            if (m === 0) {
+                categories.informal.push(`${germanHour(current12Hour)} Uhr`);
+            } else if (m === 15) {
+                categories.informal.push(`Viertel nach ${germanHour(current12Hour)}`);
+            } else if (m === 45) {
+                categories.informal.push(`Viertel vor ${germanHour(next12Hour)}`);
+            } else if (m === 30) {
+                categories.informal.push(`halb ${germanHour(next12Hour)}`);
+            } else if (m < 30) {
+                if (m === 20) {
+                    categories.informal.push(`zwanzig nach ${germanHour(current12Hour)}`);
+                } else if (m === 10) {
+                    categories.informal.push(`zehn nach ${germanHour(current12Hour)}`);
+                } else {
+                    categories.informal.push(`${germanMinuteSpelled(m)} nach ${germanHour(current12Hour)}`);
+                }
+            } else {
+                const remainingMinutes = 60 - m;
+                if (m === 40) {
+                    categories.informal.push(`zwanzig vor ${germanHour(next12Hour)}`);
+                } else if (m === 50) {
+                    categories.informal.push(`zehn vor ${germanHour(next12Hour)}`);
+                } else {
+                    categories.informal.push(`${germanMinuteSpelled(remainingMinutes)} vor ${germanHour(next12Hour)}`);
+                }
+            }
+
+            return categories;
+        }
+
+        function speak(text) {
+            if (typeof speechSynthesis === "undefined") return;
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            const selectedIndex = voiceSelect.value;
+
+            if (selectedIndex !== "" && germanVoices[selectedIndex]) {
+                utterance.voice = germanVoices[selectedIndex];
+                utterance.lang = germanVoices[selectedIndex].lang;
+            } else {
+                utterance.lang = "de-DE";
+            }
+
+            speechSynthesis.speak(utterance);
+        }
+
+        function createPhraseRow(text) {
+            const div = document.createElement("div");
+            div.className = "phrase";
+            div.innerHTML = `<span>${text}</span><button>🔊</button>`;
+            div.querySelector("button").addEventListener("click", () => speak(text));
+            return div;
+        }
+
+        function renderPhrases(hour, minute) {
+            const data = buildGermanTimeCategories(hour, minute);
+            const container = document.getElementById("phrases");
+            container.innerHTML = "";
+
+            const title12 = document.createElement("div");
+            title12.className = "phrase-section-title";
+            title12.textContent = "Official (12-Hour Clock)";
+            container.appendChild(title12);
+            container.appendChild(createPhraseRow(data.official12));
+
+            const title24 = document.createElement("div");
+            title24.className = "phrase-section-title";
+            title24.textContent = "Official (24-Hour Clock)";
+            container.appendChild(title24);
+            container.appendChild(createPhraseRow(data.official24));
+
+            if (data.informal.length > 0) {
+                const titleInf = document.createElement("div");
+                titleInf.className = "phrase-section-title";
+                titleInf.textContent = "Informal / Conversational";
+                container.appendChild(titleInf);
+                data.informal.forEach(text => {
+                    container.appendChild(createPhraseRow(text));
+                });
+            }
+        }
+
+        function updateClock() {
+            const displayHour24 = Math.floor(totalMinutes / 60) % 24;
+            const displayHour12 = displayHour24 % 12 || 12;
+            const displayMinute = totalMinutes % 60;
+
+            const hourAngle = (displayHour12 % 12) * 30 + displayMinute * 0.5;
+            const minuteAngle = displayMinute * 6;
+
+            setHand(hourHand, 90, hourAngle);
+            setHand(minuteHand, 130, minuteAngle);
+
+            document.getElementById("digitalTime").textContent =
+                `${String(displayHour24).padStart(2, "0")}:${String(displayMinute).padStart(2, "0")}`;
+
+            renderPhrases(displayHour24, displayMinute);
+        }
+
+        function setHand(hand, length, angle) {
+            const rad = (angle - 90) * Math.PI / 180;
+            const x = center + Math.cos(rad) * length;
+            const y = center + Math.sin(rad) * length;
+            hand.setAttribute("x2", x);
+            hand.setAttribute("y2", y);
+        }
+
+        function getEventXAndY(e, targetElement) {
+            const rect = targetElement.getBoundingClientRect();
+            if (e.touches && e.touches.length > 0) {
+                return {
+                    x: e.touches[0].clientX - rect.left - center,
+                    y: e.touches[0].clientY - rect.top - center
+                };
+            }
+            return {
+                x: e.clientX - rect.left - center,
+                y: e.clientY - rect.top - center
+            };
+        }
+
+        function startDrag(type) {
+            dragging = type;
+        }
+
+        hourHand.addEventListener("mousedown", () => startDrag("hour"));
+        minuteHand.addEventListener("mousedown", () => startDrag("minute"));
+        hourHand.addEventListener("touchstart", (e) => { e.preventDefault(); startDrag("hour"); }, { passive: false });
+        minuteHand.addEventListener("touchstart", (e) => { e.preventDefault(); startDrag("minute"); }, { passive: false });
+
+        function endDrag() {
+            dragging = null;
+            lastMinuteAngle = null;
+        }
+
+        window.addEventListener("mouseup", endDrag);
+        window.addEventListener("touchend", endDrag);
+
+        document.getElementById("liveModeBtn").addEventListener("click", () => {
+            liveMode = true;
+            modeIndicator.textContent = "Mode: Live Clock";
+            modeIndicator.className = "mode-status mode-live";
+            syncWithCurrentTime();
+            if (liveTimer) clearInterval(liveTimer);
+            liveTimer = setInterval(syncWithCurrentTime, 1000);
+        });
+
+        document.getElementById("practiceModeBtn").addEventListener("click", () => {
+            liveMode = false;
+            modeIndicator.textContent = "Mode: Practice Mode";
+            modeIndicator.className = "mode-status mode-practice";
+            clearInterval(liveTimer);
+        });
+
+        function handleMove(e) {
+            if (liveMode || !dragging) return;
+
+            const coords = getEventXAndY(e, clock);
+            let angle = Math.atan2(coords.y, coords.x) * 180 / Math.PI + 90;
+            if (angle < 0) angle += 360;
+
+            if (dragging === "minute") {
+                if (lastMinuteAngle === null) {
+                    lastMinuteAngle = angle;
+                    return;
+                }
+
+                let diff = angle - lastMinuteAngle;
+                if (diff > 180) diff -= 360;
+                if (diff < -180) diff += 360;
+
+                const minuteChange = Math.round(diff / 6);
+                if (minuteChange !== 0) {
+                    totalMinutes += minuteChange;
+                    if (totalMinutes < 0) totalMinutes += 24 * 60;
+                    totalMinutes = totalMinutes % (24 * 60);
+                    lastMinuteAngle = angle;
+                    updateClock();
+                }
+            }
+
+            if (dragging === "hour") {
+                const currentHour24 = Math.floor(totalMinutes / 60);
+                const isPm = currentHour24 >= 12;
+
+                let newHour12 = Math.round(angle / 30) % 12 || 12;
+                let newHour24 = isPm ? (newHour12 % 12) + 12 : (newHour12 % 12);
+
+                const currentMinute = totalMinutes % 60;
+                totalMinutes = newHour24 * 60 + currentMinute;
+                updateClock();
+            }
+        }
+
+        document.addEventListener("mousemove", handleMove);
+        document.addEventListener("touchmove", handleMove, { passive: false });
+
+        updateClock();
+
+    </script>
+
+</body>
+
+</html>
