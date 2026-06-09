@@ -179,6 +179,13 @@ function loadLocalizedVoices() {
     }
 }
 
+// Shows the quiz button only when German is active
+function updateQuizButtonVisibility() {
+    const quizBtn = document.querySelector(".control-btns a[href='./quiz/']");
+    if (!quizBtn) return;
+    quizBtn.style.display = currentLanguage === "de" ? "" : "none";
+}
+
 // Native triggers adjusting labels instantly on drop-down changes
 function handleLanguageChange() {
     currentLanguage = langSelect.value;
@@ -198,6 +205,7 @@ function handleLanguageChange() {
 
     renderDialFace();
     loadLocalizedVoices();
+    updateQuizButtonVisibility();
     updateClock();
 }
 
@@ -635,4 +643,5 @@ langSelect.value = currentLanguage;
 voiceLabel.textContent = `${uiTranslations[currentLanguage].voiceLabel} (${currentLanguage.toUpperCase()} Voice)`;
 renderDialFace();
 loadLocalizedVoices();
+updateQuizButtonVisibility();
 updateClock();
