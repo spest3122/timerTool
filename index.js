@@ -16,7 +16,7 @@ let liveTimer = null;
 let dragging = null;
 
 let filteredVoices = [];
-let currentLanguage = "de";
+let currentLanguage = localStorage.getItem("timerTool_language") || "de";
 
 // Multi-lingual UI Dictionary Lookups
 const uiTranslations = {
@@ -171,11 +171,18 @@ function loadLocalizedVoices() {
         option.textContent = `${voice.name} (${voice.lang})`;
         voiceSelect.appendChild(option);
     });
+
+    // Restore saved voice for this language
+    const savedVoice = localStorage.getItem(`timerTool_voice_${currentLanguage}`);
+    if (savedVoice !== null && savedVoice < filteredVoices.length) {
+        voiceSelect.value = savedVoice;
+    }
 }
 
 // Native triggers adjusting labels instantly on drop-down changes
 function handleLanguageChange() {
     currentLanguage = langSelect.value;
+    localStorage.setItem("timerTool_language", currentLanguage);
 
     // Translate Text Labels
     voiceLabel.textContent = `${uiTranslations[currentLanguage].voiceLabel} (${currentLanguage.toUpperCase()} Voice)`;
@@ -193,6 +200,13 @@ function handleLanguageChange() {
     loadLocalizedVoices();
     updateClock();
 }
+
+// Saves the selected voice index keyed by language whenever the user changes it
+voiceSelect.addEventListener("change", () => {
+    if (voiceSelect.value !== "") {
+        localStorage.setItem(`timerTool_voice_${currentLanguage}`, voiceSelect.value);
+    }
+});
 
 langSelect.addEventListener("change", handleLanguageChange);
 if (typeof speechSynthesis !== "undefined" && speechSynthesis.onvoiceschanged !== undefined) {
@@ -616,7 +630,9 @@ function syncWithCurrentTime() {
     updateClock();
 }
 
-// Initialize default view
+// Initialize default view — restore persisted language selection first
+langSelect.value = currentLanguage;
+voiceLabel.textContent = `${uiTranslations[currentLanguage].voiceLabel} (${currentLanguage.toUpperCase()} Voice)`;
 renderDialFace();
 loadLocalizedVoices();
 updateClock();
