@@ -36,8 +36,10 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.18);
-                transition: background 0.18s, transform 0.15s;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+                transition:
+                    background 0.18s,
+                    transform 0.15s;
                 flex-shrink: 0;
             }
             #settingsToggleBtn:hover {
@@ -54,7 +56,7 @@
             #drawerOverlay {
                 position: fixed;
                 inset: 0;
-                background: rgba(0,0,0,0.32);
+                background: rgba(0, 0, 0, 0.32);
                 z-index: 300;
                 opacity: 0;
                 pointer-events: none;
@@ -74,7 +76,7 @@
                 width: 320px;
                 max-width: 92vw;
                 background: #fff;
-                box-shadow: -4px 0 24px rgba(0,0,0,0.15);
+                box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
                 z-index: 400;
                 transform: translateX(100%);
                 transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -102,7 +104,7 @@
                 letter-spacing: 0.3px;
             }
             #drawerCloseBtn {
-                background: rgba(255,255,255,0.18);
+                background: rgba(255, 255, 255, 0.18);
                 border: none;
                 border-radius: 6px;
                 color: white;
@@ -117,7 +119,7 @@
                 transition: background 0.15s;
             }
             #drawerCloseBtn:hover {
-                background: rgba(255,255,255,0.32);
+                background: rgba(255, 255, 255, 0.32);
             }
 
             .drawer-body {
@@ -152,7 +154,7 @@
             .drawer-field select:focus {
                 outline: none;
                 border-color: #1976d2;
-                box-shadow: 0 0 0 2px rgba(25,118,210,0.15);
+                box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.15);
             }
 
             .drawer-divider {
@@ -209,11 +211,124 @@
                 box-sizing: border-box;
             }
 
+            /* ── Week + Time horizontal row ── */
+            .top-row {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                justify-content: center;
+                gap: 16px;
+                margin-bottom: 10px;
+            }
+
+            /* ── Week Display ── */
+            .week-display {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+            }
+
+            .week-box {
+                background: white;
+                border: 2.5px solid #e53935;
+                border-radius: 10px;
+                min-width: 110px;
+                padding: 8px 14px;
+                text-align: center;
+                box-shadow: 0 2px 8px rgba(229, 57, 53, 0.12);
+                transition:
+                    box-shadow 0.18s,
+                    transform 0.15s,
+                    background 0.15s;
+                cursor: pointer;
+                user-select: none;
+            }
+
+            .week-box:hover {
+                box-shadow: 0 4px 16px rgba(229, 57, 53, 0.22);
+                background: #fff5f5;
+                transform: scale(1.04);
+            }
+
+            .week-box:active {
+                transform: scale(0.97);
+                background: #ffebee;
+            }
+
+            .week-day-label {
+                font-size: 11px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                color: #e53935;
+                margin-bottom: 2px;
+            }
+
+            .week-day-name {
+                font-size: 17px;
+                font-weight: bold;
+                color: #222;
+                transition: opacity 0.18s ease;
+            }
+
+            .week-day-name.flash {
+                opacity: 0;
+            }
+
+            .week-arrow {
+                background: none;
+                border: 2px solid #bbb;
+                border-radius: 50%;
+                width: 34px;
+                height: 34px;
+                font-size: 18px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #555;
+                transition:
+                    border-color 0.15s,
+                    background 0.15s,
+                    transform 0.1s;
+                line-height: 1;
+                padding: 0;
+                touch-action: manipulation;
+                user-select: none;
+            }
+
+            .week-arrow:hover {
+                border-color: #1976d2;
+                background: #e3f0fd;
+                color: #1976d2;
+                transform: scale(1.1);
+            }
+
+            .week-arrow:active {
+                transform: scale(0.92);
+                background: #bbdefb;
+            }
+
+            /* Hide arrows in live mode */
+            .live-mode .week-arrow {
+                visibility: hidden;
+                pointer-events: none;
+            }
+
+            /* Delete the voice toggle button styles — removed */
+
             .digital-time {
                 font-size: 40px;
                 font-weight: bold;
-                margin-bottom: 10px;
+                margin-bottom: 0;
                 text-align: center;
+                white-space: nowrap;
+            }
+
+            .status-block {
+                display: flex;
+                flex-direction: column;
             }
 
             /* Mode Indicator Styles */
@@ -371,14 +486,20 @@
         <div id="settingsBar">
             <button id="settingsToggleBtn" aria-label="Open settings" title="Settings">
                 <!-- Hamburger / sliders icon -->
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-                     stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="4" y1="6"  x2="20" y2="6"/>
-                    <line x1="4" y1="12" x2="20" y2="12"/>
-                    <line x1="4" y1="18" x2="20" y2="18"/>
-                    <circle cx="9"  cy="6"  r="2.2" fill="currentColor" stroke="none"/>
-                    <circle cx="15" cy="12" r="2.2" fill="currentColor" stroke="none"/>
-                    <circle cx="9"  cy="18" r="2.2" fill="currentColor" stroke="none"/>
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <line x1="4" y1="6" x2="20" y2="6" />
+                    <line x1="4" y1="12" x2="20" y2="12" />
+                    <line x1="4" y1="18" x2="20" y2="18" />
+                    <circle cx="9" cy="6" r="2.2" fill="currentColor" stroke="none" />
+                    <circle cx="15" cy="12" r="2.2" fill="currentColor" stroke="none" />
+                    <circle cx="9" cy="18" r="2.2" fill="currentColor" stroke="none" />
                 </svg>
             </button>
         </div>
@@ -444,10 +565,34 @@
                 </svg>
             </div>
 
-            <div class="info">
-                <div id="digitalTime" class="digital-time"></div>
-
-                <div id="modeIndicator" class="mode-status mode-practice">Mode: Practice Mode</div>
+            <div class="info" id="infoPanel">
+                <!-- Week + Time side by side -->
+                <div class="top-row">
+                    <div class="week-display">
+                        <button class="week-arrow" id="weekPrevBtn" aria-label="Previous day">
+                            &#8249;
+                        </button>
+                        <div
+                            class="week-box"
+                            id="weekBox"
+                            role="button"
+                            tabindex="0"
+                            title="Click to hear the day name"
+                        >
+                            <div class="week-day-label" id="weekLabel">WEEK</div>
+                            <div class="week-day-name" id="weekDayName">–</div>
+                        </div>
+                        <button class="week-arrow" id="weekNextBtn" aria-label="Next day">
+                            &#8250;
+                        </button>
+                    </div>
+                    <div class="status-block">
+                        <div id="digitalTime" class="digital-time"></div>
+                        <div id="modeIndicator" class="mode-status mode-practice">
+                            Mode: Practice Mode
+                        </div>
+                    </div>
+                </div>
 
                 <div id="phrases"></div>
 
@@ -463,9 +608,9 @@
         <script>
             // ── Drawer toggle logic ──
             const settingsToggleBtn = document.getElementById("settingsToggleBtn");
-            const drawerOverlay     = document.getElementById("drawerOverlay");
-            const settingsDrawer    = document.getElementById("settingsDrawer");
-            const drawerCloseBtn    = document.getElementById("drawerCloseBtn");
+            const drawerOverlay = document.getElementById("drawerOverlay");
+            const settingsDrawer = document.getElementById("settingsDrawer");
+            const drawerCloseBtn = document.getElementById("drawerCloseBtn");
 
             function openDrawer() {
                 settingsDrawer.classList.add("open");

@@ -15,6 +15,78 @@ let liveMode = false;
 let liveTimer = null;
 let dragging = null;
 
+// ── Week state ──
+// dayIndex: 0=Monday … 6=Sunday (matches ISO weekday - 1)
+let practiceWeekDay = 0; // used only in practice mode
+
+const weekDayNames = {
+    en: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+    de: ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"],
+    es: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"],
+};
+
+const weekLabelText = {
+    en: "WEEKDAY",
+    de: "WOCHENTAG",
+    es: "DÍA",
+};
+
+// ── Click sound via Web Audio API ──
+let _audioCtx = null;
+function getAudioCtx() {
+    if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return _audioCtx;
+}
+function playClickSound() {
+    try {
+        const ctx = getAudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.18, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.13);
+    } catch (e) { /* audio not available */ }
+}
+
+// Returns today's 0-based Monday-anchored day index
+function getTodayDayIndex() {
+    const d = new Date().getDay(); // 0=Sun … 6=Sat
+    return (d + 6) % 7;            // 0=Mon … 6=Sun
+}
+
+function renderWeek() {
+    const nameEl  = document.getElementById("weekDayName");
+    const labelEl = document.getElementById("weekLabel");
+    if (!nameEl || !labelEl) return;
+
+    const idx = liveMode ? getTodayDayIndex() : practiceWeekDay;
+    const names = weekDayNames[currentLanguage] || weekDayNames.en;
+    labelEl.textContent = weekLabelText[currentLanguage] || "WEEKDAY";
+
+    // Brief flash animation
+    nameEl.classList.add("flash");
+    setTimeout(() => {
+        nameEl.textContent = names[idx];
+        nameEl.classList.remove("flash");
+    }, 90);
+
+    // Show/hide arrows based on mode
+    const infoPanel = document.getElementById("infoPanel");
+    if (infoPanel) {
+        if (liveMode) {
+            infoPanel.classList.add("live-mode");
+        } else {
+            infoPanel.classList.remove("live-mode");
+        }
+    }
+}
+
 let filteredVoices = [];
 let currentLanguage = localStorage.getItem("timerTool_language") || "de";
 
@@ -207,6 +279,7 @@ function handleLanguageChange() {
     loadLocalizedVoices();
     updateQuizButtonVisibility();
     updateClock();
+    renderWeek();
 }
 
 // Saves the selected voice index keyed by language whenever the user changes it
@@ -585,6 +658,8 @@ document.getElementById("liveModeBtn").addEventListener("click", () => {
     syncWithCurrentTime();
     if (liveTimer) clearInterval(liveTimer);
     liveTimer = setInterval(syncWithCurrentTime, 1000);
+    renderWeek();
+    speak(weekDayNames[currentLanguage][getTodayDayIndex()]);
 });
 
 document.getElementById("practiceModeBtn").addEventListener("click", () => {
@@ -592,6 +667,23 @@ document.getElementById("practiceModeBtn").addEventListener("click", () => {
     modeIndicator.textContent = uiTranslations[currentLanguage].practice;
     modeIndicator.className = "mode-status mode-practice";
     clearInterval(liveTimer);
+    // Default practice to today's day so it feels natural
+    practiceWeekDay = getTodayDayIndex();
+    renderWeek();
+});
+
+// Week navigation arrows
+document.getElementById("weekPrevBtn").addEventListener("click", () => {
+    if (liveMode) return;
+    practiceWeekDay = (practiceWeekDay + 6) % 7;
+    renderWeek();
+    speak(weekDayNames[currentLanguage][practiceWeekDay]);
+});
+document.getElementById("weekNextBtn").addEventListener("click", () => {
+    if (liveMode) return;
+    practiceWeekDay = (practiceWeekDay + 1) % 7;
+    renderWeek();
+    speak(weekDayNames[currentLanguage][practiceWeekDay]);
 });
 
 function handleMove(e) {
@@ -645,3 +737,22 @@ renderDialFace();
 loadLocalizedVoices();
 updateQuizButtonVisibility();
 updateClock();
+
+// Initialize week display (starts in practice mode)
+practiceWeekDay = getTodayDayIndex();
+renderWeek();
+
+// Clicking the week box speaks the current day name
+document.getElementById("weekBox").addEventListener("click", () => {
+    const idx = liveMode ? getTodayDayIndex() : practiceWeekDay;
+    speak(weekDayNames[currentLanguage][idx]);
+});
+// Keyboard support (Enter / Space)
+document.getElementById("weekBox").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        const idx = liveMode ? getTodayDayIndex() : practiceWeekDay;
+        speak(weekDayNames[currentLanguage][idx]);
+    }
+});
+
