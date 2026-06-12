@@ -6,11 +6,20 @@
         <title>Multilingual Time Trainer</title>
 
         <style>
+            /* ── Google Font ── */
+            @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+            * {
+                box-sizing: border-box;
+            }
+
             body {
                 margin: 0;
-                font-family: Arial, sans-serif;
+                font-family: "Inter", Arial, sans-serif;
                 background: #f4f6f8;
                 color: #333;
+                display: flex;
+                min-height: 100vh;
             }
 
             /* ── Top-right Settings Bar ── */
@@ -172,7 +181,119 @@
                 margin-bottom: -8px;
             }
 
+            /* ══════════════════════════════════════════
+               LEFT NAV SIDEBAR
+            ══════════════════════════════════════════ */
+            #navSidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                height: 100vh;
+                width: 72px;
+                background: linear-gradient(180deg, #1565c0 0%, #1976d2 60%, #1e88e5 100%);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding: 16px 0;
+                gap: 6px;
+                z-index: 150;
+                box-shadow: 3px 0 16px rgba(21, 101, 192, 0.18);
+                transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+                overflow: hidden;
+            }
+
+            #navSidebar:hover,
+            #navSidebar.expanded {
+                width: 180px;
+            }
+
+            .nav-logo {
+                width: 40px;
+                height: 40px;
+                background: rgba(255, 255, 255, 0.15);
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-bottom: 12px;
+                flex-shrink: 0;
+            }
+            .nav-logo svg {
+                width: 22px;
+                height: 22px;
+                fill: white;
+                cursor: default;
+            }
+
+            .nav-item {
+                width: calc(100% - 16px);
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 10px 14px;
+                border-radius: 12px;
+                text-decoration: none;
+                color: rgba(255, 255, 255, 0.78);
+                font-size: 13px;
+                font-weight: 500;
+                transition:
+                    background 0.18s,
+                    color 0.18s,
+                    transform 0.13s;
+                white-space: nowrap;
+                flex-shrink: 0;
+                cursor: pointer;
+                border: none;
+                background: transparent;
+            }
+            .nav-item:hover {
+                background: rgba(255, 255, 255, 0.16);
+                color: white;
+                transform: translateX(2px);
+            }
+            .nav-item.active {
+                background: rgba(255, 255, 255, 0.22);
+                color: white;
+                font-weight: 600;
+            }
+            .nav-item svg {
+                width: 22px;
+                height: 22px;
+                flex-shrink: 0;
+                fill: none;
+                stroke: currentColor;
+                stroke-width: 2;
+                stroke-linecap: round;
+                stroke-linejoin: round;
+                cursor: pointer;
+            }
+            .nav-label {
+                opacity: 0;
+                transition: opacity 0.18s 0.05s;
+                pointer-events: none;
+            }
+            #navSidebar:hover .nav-label,
+            #navSidebar.expanded .nav-label {
+                opacity: 1;
+            }
+
+            .nav-divider {
+                width: calc(100% - 24px);
+                height: 1px;
+                background: rgba(255, 255, 255, 0.15);
+                margin: 4px 0;
+                flex-shrink: 0;
+            }
+
             /* ── Main Layout ── */
+            .page-wrapper {
+                flex: 1;
+                margin-left: 72px;
+                display: flex;
+                flex-direction: column;
+                min-height: 100vh;
+            }
+
             .container {
                 display: flex;
                 flex-direction: row;
@@ -181,6 +302,7 @@
                 align-items: center;
                 min-height: 100vh;
                 padding: 20px;
+                padding-top: 20px;
                 box-sizing: border-box;
             }
 
@@ -445,14 +567,86 @@
                 opacity: 0.9;
             }
 
-            /* RESPONSIVE WEB DESIGN MEDIA QUERIES FOR PHONES */
+            /* ══════════════════════════════════════════
+               MOBILE — Bottom Tab Navigation
+            ══════════════════════════════════════════ */
+            #bottomNav {
+                display: none;
+            }
+
             @media (max-width: 768px) {
+                body {
+                    flex-direction: column;
+                }
+
+                /* Hide left sidebar on mobile */
+                #navSidebar {
+                    display: none;
+                }
+
+                /* Push content to fill full width */
+                .page-wrapper {
+                    margin-left: 0;
+                    padding-bottom: 68px; /* room for bottom nav */
+                }
+
+                /* Show bottom nav bar */
+                #bottomNav {
+                    display: flex;
+                    position: fixed;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    height: 60px;
+                    background: linear-gradient(90deg, #1565c0 0%, #1976d2 60%, #1e88e5 100%);
+                    z-index: 200;
+                    align-items: center;
+                    justify-content: space-around;
+                    box-shadow: 0 -3px 16px rgba(21, 101, 192, 0.22);
+                    padding-bottom: env(safe-area-inset-bottom, 0px);
+                }
+
+                .bottom-nav-item {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 3px;
+                    text-decoration: none;
+                    color: rgba(255, 255, 255, 0.75);
+                    font-size: 10px;
+                    font-weight: 500;
+                    padding: 6px 20px;
+                    border-radius: 10px;
+                    transition:
+                        color 0.15s,
+                        background 0.15s;
+                    flex: 1;
+                    cursor: pointer;
+                    border: none;
+                    background: transparent;
+                }
+                .bottom-nav-item:hover,
+                .bottom-nav-item.active {
+                    color: white;
+                    background: rgba(255, 255, 255, 0.14);
+                }
+                .bottom-nav-item svg {
+                    width: 22px;
+                    height: 22px;
+                    fill: none;
+                    stroke: currentColor;
+                    stroke-width: 2;
+                    stroke-linecap: round;
+                    stroke-linejoin: round;
+                }
+
                 .container {
                     flex-direction: column;
                     justify-content: flex-start;
                     gap: 20px;
                     padding: 15px;
-                    padding-top: 60px;
+                    padding-top: 20px;
                 }
 
                 .clock-wrapper {
@@ -477,132 +671,238 @@
                     width: 100%;
                     max-width: 100%;
                 }
+
+                /* Settings button offset for mobile (no sidebar) */
+                #settingsBar {
+                    top: 0;
+                    right: 0;
+                }
             }
         </style>
     </head>
 
     <body>
-        <!-- Settings toggle bar (top-right) -->
-        <div id="settingsBar">
-            <button id="settingsToggleBtn" aria-label="Open settings" title="Settings">
-                <!-- Hamburger / sliders icon -->
-                <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-                    <line x1="4" y1="6" x2="20" y2="6" />
-                    <line x1="4" y1="12" x2="20" y2="12" />
-                    <line x1="4" y1="18" x2="20" y2="18" />
-                    <circle cx="9" cy="6" r="2.2" fill="currentColor" stroke="none" />
-                    <circle cx="15" cy="12" r="2.2" fill="currentColor" stroke="none" />
-                    <circle cx="9" cy="18" r="2.2" fill="currentColor" stroke="none" />
-                </svg>
-            </button>
-        </div>
-
-        <!-- Drawer overlay (click to close) -->
-        <div id="drawerOverlay" aria-hidden="true"></div>
-
-        <!-- Settings Drawer -->
-        <aside id="settingsDrawer" role="dialog" aria-modal="true" aria-label="Settings">
-            <div class="drawer-header">
-                <h2>⚙️ Settings</h2>
-                <button id="drawerCloseBtn" aria-label="Close settings">✕</button>
-            </div>
-            <div class="drawer-body">
-                <span class="drawer-section-title">Language</span>
-                <div class="drawer-field">
-                    <label for="langSelect">Language / Sprache / Idioma</label>
-                    <select id="langSelect">
-                        <option value="de" selected>Deutsch (German)</option>
-                        <option value="en">English</option>
-                        <option value="es">Español (Spanish)</option>
-                    </select>
-                </div>
-
-                <div class="drawer-divider"></div>
-
-                <span class="drawer-section-title">Voice</span>
-                <div class="drawer-field">
-                    <label id="voiceLabel" for="voiceSelect">Stimme auswählen (DE Voice)</label>
-                    <select id="voiceSelect">
-                        <option value="">System Default Voice</option>
-                    </select>
-                </div>
-            </div>
-        </aside>
-
-        <div class="container">
-            <div class="clock-wrapper">
-                <svg id="clock" viewBox="0 0 400 400" width="400" height="400">
-                    <circle cx="200" cy="200" r="180" fill="white" stroke="#333" stroke-width="3" />
-                    <g id="numbers"></g>
+        <!-- ══════════════════════════════════════
+             LEFT SIDEBAR NAVIGATION (Desktop)
+        ══════════════════════════════════════ -->
+        <nav id="navSidebar" aria-label="Main navigation">
+            <!-- Logo / Brand -->
+            <div class="nav-logo" title="Multilingual Time Trainer">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="10" />
                     <line
-                        id="hourHand"
-                        x1="200"
-                        y1="200"
-                        x2="200"
-                        y2="110"
-                        stroke="#222"
-                        stroke-width="12"
+                        x1="12"
+                        y1="6"
+                        x2="12"
+                        y2="12"
+                        stroke="white"
+                        stroke-width="2"
                         stroke-linecap="round"
                     />
                     <line
-                        id="minuteHand"
-                        x1="200"
-                        y1="200"
-                        x2="200"
-                        y2="70"
-                        stroke="#1976d2"
-                        stroke-width="10"
+                        x1="12"
+                        y1="12"
+                        x2="16"
+                        y2="14"
+                        stroke="white"
+                        stroke-width="2"
                         stroke-linecap="round"
                     />
-                    <circle cx="200" cy="200" r="8" fill="#333" />
                 </svg>
             </div>
 
-            <div class="info" id="infoPanel">
-                <!-- Week + Time side by side -->
-                <div class="top-row">
-                    <div class="week-display">
-                        <button class="week-arrow" id="weekPrevBtn" aria-label="Previous day">
-                            &#8249;
-                        </button>
-                        <div
-                            class="week-box"
-                            id="weekBox"
-                            role="button"
-                            tabindex="0"
-                            title="Click to hear the day name"
-                        >
-                            <div class="week-day-label" id="weekLabel">WEEK</div>
-                            <div class="week-day-name" id="weekDayName">–</div>
-                        </div>
-                        <button class="week-arrow" id="weekNextBtn" aria-label="Next day">
-                            &#8250;
-                        </button>
+            <!-- Home -->
+            <a class="nav-item active" href="../" aria-label="Home — Timer" title="Timer">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 12L12 3l9 9" />
+                    <path d="M9 21V12h6v9" />
+                </svg>
+                <span class="nav-label">Timer</span>
+            </a>
+
+            <div class="nav-divider"></div>
+
+            <!-- Quiz -->
+            <a class="nav-item" href="./quiz/" aria-label="German Quiz" title="Quiz">
+                <svg viewBox="0 0 24 24">
+                    <path d="M9 11l3 3 8-8" />
+                    <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+                </svg>
+                <span class="nav-label">Quiz</span>
+            </a>
+
+            <!-- Speaker -->
+            <a class="nav-item" href="./speaker/" aria-label="Speaker practice" title="Speaker">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 1a3 3 0 003 3v8a3 3 0 01-6 0V4a3 3 0 013-3z" />
+                    <path d="M19 10v2a7 7 0 01-14 0v-2" />
+                    <line x1="12" y1="19" x2="12" y2="23" />
+                    <line x1="8" y1="23" x2="16" y2="23" />
+                </svg>
+                <span class="nav-label">Speaker</span>
+            </a>
+        </nav>
+
+        <!-- ══════════════════════════════════════
+             BOTTOM NAV BAR (Mobile only)
+        ══════════════════════════════════════ -->
+        <nav id="bottomNav" aria-label="Main navigation mobile">
+            <a class="bottom-nav-item active" href="../" aria-label="Timer">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 12L12 3l9 9" />
+                    <path d="M9 21V12h6v9" />
+                </svg>
+                Timer
+            </a>
+            <a class="bottom-nav-item" href="./quiz/" aria-label="Quiz">
+                <svg viewBox="0 0 24 24">
+                    <path d="M9 11l3 3 8-8" />
+                    <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+                </svg>
+                Quiz
+            </a>
+            <a class="bottom-nav-item" href="./speaker/" aria-label="Speaker">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 1a3 3 0 003 3v8a3 3 0 01-6 0V4a3 3 0 013-3z" />
+                    <path d="M19 10v2a7 7 0 01-14 0v-2" />
+                    <line x1="12" y1="19" x2="12" y2="23" />
+                    <line x1="8" y1="23" x2="16" y2="23" />
+                </svg>
+                Speaker
+            </a>
+        </nav>
+
+        <!-- Page wrapper (everything except sidebars) -->
+        <div class="page-wrapper">
+            <!-- Settings toggle bar (top-right) -->
+            <div id="settingsBar">
+                <button id="settingsToggleBtn" aria-label="Open settings" title="Settings">
+                    <!-- Hamburger / sliders icon -->
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+                        <line x1="4" y1="6" x2="20" y2="6" />
+                        <line x1="4" y1="12" x2="20" y2="12" />
+                        <line x1="4" y1="18" x2="20" y2="18" />
+                        <circle cx="9" cy="6" r="2.2" fill="currentColor" stroke="none" />
+                        <circle cx="15" cy="12" r="2.2" fill="currentColor" stroke="none" />
+                        <circle cx="9" cy="18" r="2.2" fill="currentColor" stroke="none" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Drawer overlay (click to close) -->
+            <div id="drawerOverlay" aria-hidden="true"></div>
+
+            <!-- Settings Drawer -->
+            <aside id="settingsDrawer" role="dialog" aria-modal="true" aria-label="Settings">
+                <div class="drawer-header">
+                    <h2>⚙️ Settings</h2>
+                    <button id="drawerCloseBtn" aria-label="Close settings">✕</button>
+                </div>
+                <div class="drawer-body">
+                    <span class="drawer-section-title">Language</span>
+                    <div class="drawer-field">
+                        <label for="langSelect">Language / Sprache / Idioma</label>
+                        <select id="langSelect">
+                            <option value="de" selected>Deutsch (German)</option>
+                            <option value="en">English</option>
+                            <option value="es">Español (Spanish)</option>
+                        </select>
                     </div>
-                    <div class="status-block">
-                        <div id="digitalTime" class="digital-time"></div>
-                        <div id="modeIndicator" class="mode-status mode-practice">
-                            Mode: Practice Mode
-                        </div>
+
+                    <div class="drawer-divider"></div>
+
+                    <span class="drawer-section-title">Voice</span>
+                    <div class="drawer-field">
+                        <label id="voiceLabel" for="voiceSelect">Stimme auswählen (DE Voice)</label>
+                        <select id="voiceSelect">
+                            <option value="">System Default Voice</option>
+                        </select>
                     </div>
                 </div>
+            </aside>
 
-                <div id="phrases"></div>
+            <div class="container">
+                <div class="clock-wrapper">
+                    <svg id="clock" viewBox="0 0 400 400" width="400" height="400">
+                        <circle
+                            cx="200"
+                            cy="200"
+                            r="180"
+                            fill="white"
+                            stroke="#333"
+                            stroke-width="3"
+                        />
+                        <g id="numbers"></g>
+                        <line
+                            id="hourHand"
+                            x1="200"
+                            y1="200"
+                            x2="200"
+                            y2="110"
+                            stroke="#222"
+                            stroke-width="12"
+                            stroke-linecap="round"
+                        />
+                        <line
+                            id="minuteHand"
+                            x1="200"
+                            y1="200"
+                            x2="200"
+                            y2="70"
+                            stroke="#1976d2"
+                            stroke-width="10"
+                            stroke-linecap="round"
+                        />
+                        <circle cx="200" cy="200" r="8" fill="#333" />
+                    </svg>
+                </div>
 
-                <div class="control-btns">
-                    <button id="liveModeBtn">Live Clock</button>
-                    <button id="practiceModeBtn">Practice Mode</button>
-                    <a href="./quiz/" aria-label="Open German Zeitangaben quiz">German Quiz</a>
+                <div class="info" id="infoPanel">
+                    <!-- Week + Time side by side -->
+                    <div class="top-row">
+                        <div class="week-display">
+                            <button class="week-arrow" id="weekPrevBtn" aria-label="Previous day">
+                                &#8249;
+                            </button>
+                            <div
+                                class="week-box"
+                                id="weekBox"
+                                role="button"
+                                tabindex="0"
+                                title="Click to hear the day name"
+                            >
+                                <div class="week-day-label" id="weekLabel">WEEK</div>
+                                <div class="week-day-name" id="weekDayName">–</div>
+                            </div>
+                            <button class="week-arrow" id="weekNextBtn" aria-label="Next day">
+                                &#8250;
+                            </button>
+                        </div>
+                        <div class="status-block">
+                            <div id="digitalTime" class="digital-time"></div>
+                            <div id="modeIndicator" class="mode-status mode-practice">
+                                Mode: Practice Mode
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="phrases"></div>
+
+                    <div class="control-btns">
+                        <button id="liveModeBtn">Live Clock</button>
+                        <button id="practiceModeBtn">Practice Mode</button>
+                    </div>
                 </div>
             </div>
         </div>
+        <!-- end .page-wrapper -->
 
         <script src="./index.js"></script>
         <script>
