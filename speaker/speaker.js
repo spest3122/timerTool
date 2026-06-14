@@ -276,3 +276,18 @@ dragTrigger.addEventListener("click", () => {
     dragTrigger.style.borderColor = "#007bff";
   }, 250);
 });
+
+// Click Handling for Clear Button
+const clearBtn = document.getElementById("clear-btn");
+if (clearBtn) {
+  clearBtn.addEventListener("click", () => {
+    textInput.value = "";
+    textInput.focus();
+    
+    // Quick success visual feedback flash
+    clearBtn.style.borderColor = "#dc3545"; // Red for clear
+    setTimeout(() => {
+      clearBtn.style.borderColor = "#cbd5e1"; // Revert to original
+    }, 250);
+  });
+}
