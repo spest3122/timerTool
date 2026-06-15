@@ -1,0 +1,53 @@
+/* ── Settings bar (fixed top-right, all pages) ── */
+#settingsBar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 200;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#settingsToggleBtn {
+  background: #1976d2;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  width: 44px;
+  height: 44px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  transition: background 0.18s, transform 0.15s;
+  flex-shrink: 0;
+}
+#settingsToggleBtn:hover {
+  background: #1565c0;
+  transform: scale(1.07);
+}
+#settingsToggleBtn svg {
+  width: 22px;
+  height: 22px;
+  pointer-events: none;
+}
+
+/* ── Page wrapper ── */
+.page-wrapper {
+  flex: 1;
+  margin-left: 72px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ── Mobile overrides ── */
+@media (max-width: 768px) {
+  .page-wrapper {
+    margin-left: 0;
+    padding-bottom: 68px; /* room for bottom nav */
+  }
+}
