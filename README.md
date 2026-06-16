@@ -17,6 +17,6 @@ The website structure is made up of three main components:
 ## TODO
 
 - [ ] add Design System
-- [ ] rewrite this project with React
-- [ ] add testing
+- [O] rewrite this project with React
+- [O] add testing
 - [ ] add Match with picture and text
