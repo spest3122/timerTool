@@ -19,8 +19,7 @@
 .speaker-body {
   display: flex;
   gap: 24px;
-  align-items: flex-start;
-  flex-direction: row-reverse;
+  align-items: stretch;
 }
 @media (max-width: 768px) {
   .speaker-body { flex-direction: column; }
@@ -29,17 +28,17 @@
 /* ── Controls panel ── */
 .speaker-controls {
   background: white;
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 2px 12px rgba(0,0,0,.07);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.04);
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  min-width: 220px;
-  flex: 0 0 240px;
+  gap: 20px;
+  width: 320px;
+  flex: 0 0 320px;
 }
 @media (max-width: 768px) {
-  .speaker-controls { flex: none; width: 100%; }
+  .speaker-controls { flex: none; width: 100%; box-sizing: border-box; }
 }
 
 .spk-field {
@@ -72,45 +71,107 @@
   cursor: pointer;
 }
 
+/* ── Settings Box ── */
+.spk-settings-box {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.spk-setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+}
+
+.spk-setting-label {
+  flex: 0 0 auto;
+}
+
 .spk-toggle {
   display: flex;
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
   user-select: none;
 }
-.spk-toggle input { accent-color: #1976d2; cursor: pointer; width: 16px; height: 16px; }
+.spk-toggle input { accent-color: #007bff; cursor: pointer; width: 16px; height: 16px; }
+.spk-toggle-text { font-weight: 600; }
+
+.spk-slider {
+  flex: 1;
+  accent-color: #007bff;
+  cursor: pointer;
+}
+
+.spk-speed-value {
+  font-weight: 700;
+  min-width: 30px;
+  text-align: right;
+}
+
+.spk-action-icons {
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+}
+.spk-icon-btn {
+  background: white;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: #495057;
+}
+.spk-icon-btn:hover {
+  background: #e9ecef;
+}
 
 /* ── Buttons ── */
-.spk-btns {
+.spk-playback-controls {
   display: flex;
-  flex-direction: column;
   gap: 8px;
+}
+.spk-playback-controls .spk-btn {
+  flex: 1;
+  padding: 10px 0;
 }
 .spk-btn {
   border: none;
-  border-radius: 9px;
-  padding: 10px 14px;
+  border-radius: 6px;
+  padding: 12px 16px;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
   font-family: inherit;
   transition: opacity 0.15s, transform 0.1s;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 .spk-btn:hover   { opacity: 0.9; transform: scale(1.02); }
 .spk-btn:active  { transform: scale(0.96); }
-.spk-btn-primary   { background: #1976d2; color: white; }
-.spk-btn-danger    { background: #e53935; color: white; }
-.spk-btn-secondary { background: #455a64; color: white; }
-.spk-btn-ghost     {
-  background: #f1f5f9; color: #334155;
-  border: 1px solid #e2e8f0;
-  font-size: 13px; padding: 7px 12px;
-}
+.spk-btn-primary   { background: #007bff; color: white; }
+.spk-btn-danger    { background: #dc3545; color: white; }
+.spk-btn-success   { background: #28a745; color: white; }
+.spk-btn-warning   { background: #ffc107; color: #212529; }
+.spk-btn-info      { background: #17a2b8; color: white; }
+.spk-play-btn      { padding: 14px 16px; font-size: 15px; }
 
 /* ── Status / Last line ── */
 .spk-status {
@@ -136,32 +197,31 @@
 .spk-last-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.7; }
 
 /* ── Text area panel ── */
-.speaker-text-area {
+.speaker-text-area-card {
   flex: 1;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.04);
+  padding: 24px;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
   min-width: 0;
+  border: 1px solid #eaeaea;
 }
 
 .spk-textarea {
   width: 100%;
-  min-height: 450px;
-  padding: 16px;
-  border-radius: 12px;
-  border: 1.5px solid #ccc;
+  min-height: 500px;
+  padding: 0;
+  border: none;
   font-size: 15px;
   line-height: 1.7;
   font-family: 'Inter', monospace;
-  background: white;
-  color: #222;
-  resize: vertical;
+  background: transparent;
+  color: #333;
+  resize: none;
   box-sizing: border-box;
-  transition: border-color 0.15s, box-shadow 0.15s;
 }
-.spk-textarea::placeholder { color: #aaa; }
+.spk-textarea::placeholder { color: #888; font-family: monospace; }
 .spk-textarea:focus {
   outline: none;
-  border-color: #1976d2;
-  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.12);
 }

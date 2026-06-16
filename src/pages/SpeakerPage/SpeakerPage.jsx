@@ -229,25 +229,44 @@ export default function SpeakerPage() {
     <main className="speaker-main">
       <div className="speaker-wrapper">
         <div className="speaker-body">
-          {/* Left: Controls */}
+          {/* Left: Text area */}
+          <div className="speaker-text-area-card">
+            <textarea
+              id="textInput"
+              className="spk-textarea"
+              placeholder="Type something here, or tap 'Start Listening' on the right to dictate text..."
+              value={textContent}
+              onChange={e => setTextContent(e.target.value)}
+            />
+          </div>
+
+          {/* Right: Controls */}
           <div className="speaker-controls">
             {/* Language */}
             <div className="spk-field">
-              <label htmlFor="spkLangSelect">Language</label>
+              <label htmlFor="spkLangSelect">Language Configuration</label>
               <select
                 id="spkLangSelect"
                 value={language}
                 onChange={e => setLanguage(e.target.value)}
               >
                 <option value="de">Deutsch (German)</option>
-                <option value="en">English</option>
+                <option value="en">English (US/UK)</option>
                 <option value="es">Español (Spanish)</option>
               </select>
             </div>
 
+            <button
+              id="recognitionBtn"
+              className={`spk-btn spk-btn-listen ${isListening ? 'spk-btn-danger' : 'spk-btn-primary'}`}
+              onClick={toggleListening}
+            >
+              {isListening ? '⬛ Stop Listening' : '🎙️ Start Listening (Microphone)'}
+            </button>
+
             {/* Voice */}
             <div className="spk-field">
-              <label htmlFor="spkVoiceSelect">Voice</label>
+              <label htmlFor="spkVoiceSelect">Matched Output Voice</label>
               <select
                 id="spkVoiceSelect"
                 value={selectedVoiceName}
@@ -260,53 +279,64 @@ export default function SpeakerPage() {
               </select>
             </div>
 
-            {/* Speed */}
-            <div className="spk-field">
-              <label htmlFor="spkSpeed">
-                Speed: <strong>{speed.toFixed(1)}×</strong>
-              </label>
-              <input
-                id="spkSpeed"
-                type="range"
-                min="0.5" max="2.0" step="0.1"
-                value={speed}
-                onChange={e => setSpeed(parseFloat(e.target.value))}
-                className="spk-slider"
-              />
-            </div>
+            {/* Settings Box */}
+            <div className="spk-settings-box">
+              <div className="spk-setting-row">
+                <span className="spk-setting-label">Loop Playback:</span>
+                <label className="spk-toggle">
+                  <input
+                    type="checkbox"
+                    checked={isLooping}
+                    onChange={e => setIsLooping(e.target.checked)}
+                  />
+                  <span className="spk-toggle-text">{isLooping ? 'On' : 'Off'}</span>
+                </label>
+              </div>
 
-            {/* Loop toggle */}
-            <label className="spk-toggle">
-              <input
-                type="checkbox"
-                checked={isLooping}
-                onChange={e => setIsLooping(e.target.checked)}
-              />
-              <span>Loop</span>
-            </label>
+              <div className="spk-setting-row">
+                <label htmlFor="spkSpeed" className="spk-setting-label">Reading Speed:</label>
+                <input
+                  id="spkSpeed"
+                  type="range"
+                  min="0.5" max="2.0" step="0.1"
+                  value={speed}
+                  onChange={e => setSpeed(parseFloat(e.target.value))}
+                  className="spk-slider"
+                />
+                <span className="spk-speed-value">{speed.toFixed(1)}x</span>
+              </div>
 
-            {/* Action buttons */}
-            <div className="spk-btns">
-              <button id="startSpeakingBtn" className="spk-btn spk-btn-primary" onClick={handleStartSpeaking}>
-                ▶ Speak
-              </button>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button id="pauseBtn" className="spk-btn spk-btn-secondary" style={{ flex: 1 }} onClick={handlePause}>
-                  ⏸ Pause
+              <div className="spk-action-icons">
+                <button
+                  className="spk-icon-btn"
+                  onClick={handleInsertRepeat}
+                  title="Insert repeat symbol"
+                >
+                  ↺
                 </button>
-                <button id="resumeBtn" className="spk-btn spk-btn-secondary" style={{ flex: 1 }} onClick={handleResume}>
-                  ⏯ Resume
+                <button
+                  className="spk-icon-btn"
+                  onClick={() => setTextContent('')}
+                  title="Clear text"
+                >
+                  🗑️
                 </button>
               </div>
-              <button id="stopSpeakingBtn" className="spk-btn spk-btn-danger" onClick={handleStop}>
-                ■ Stop
+            </div>
+
+            {/* Play/Control Action buttons */}
+            <button id="startSpeakingBtn" className="spk-btn spk-btn-success spk-play-btn" onClick={handleStartSpeaking}>
+              ▶ Play Text
+            </button>
+            <div className="spk-playback-controls">
+              <button id="pauseBtn" className="spk-btn spk-btn-warning" onClick={handlePause}>
+                Pause
               </button>
-              <button
-                id="recognitionBtn"
-                className={`spk-btn ${isListening ? 'spk-btn-danger' : 'spk-btn-secondary'}`}
-                onClick={toggleListening}
-              >
-                {isListening ? '⬛ Stop Listening' : '🎙️ Dictate'}
+              <button id="resumeBtn" className="spk-btn spk-btn-info" onClick={handleResume}>
+                Resume
+              </button>
+              <button id="stopSpeakingBtn" className="spk-btn spk-btn-danger" onClick={handleStop}>
+                Stop
               </button>
             </div>
 
@@ -324,39 +354,6 @@ export default function SpeakerPage() {
                 <span>{lastSpokenLine}</span>
               </div>
             )}
-          </div>
-
-          {/* Right: Text area */}
-          <div className="speaker-text-area">
-            <div className="spk-textarea-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginBottom: '8px' }}>
-              <button
-                className="spk-btn spk-btn-ghost"
-                onClick={handleInsertRepeat}
-                title="Insert repeat symbol"
-              >
-                ↺ Insert Repeat
-              </button>
-              <button
-                className="spk-btn spk-btn-ghost"
-                onClick={() => setTextContent('')}
-              >
-                Clear text
-              </button>
-            </div>
-
-            <textarea
-              id="textInput"
-              className="spk-textarea"
-              placeholder={
-                language === 'de'
-                  ? 'Text hier einfügen (eine Zeile pro Satz)…'
-                  : language === 'es'
-                  ? 'Pegue el texto aquí (una oración por línea)…'
-                  : 'Paste text here (one sentence per line)…'
-              }
-              value={textContent}
-              onChange={e => setTextContent(e.target.value)}
-            />
           </div>
         </div>
       </div>
