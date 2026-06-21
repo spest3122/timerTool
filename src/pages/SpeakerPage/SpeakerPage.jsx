@@ -245,10 +245,13 @@ export default function SpeakerPage() {
     recognition.interimResults = false
     recognition.lang           = LANG_DEFAULTS[language] || 'de-DE'
     recognition.onresult = (e) => {
-      const transcript = Array.from(e.results)
-        .map(r => r[0].transcript)
-        .join(' ')
-      setTextContent(prev => prev ? prev + '\n' + transcript : transcript)
+      // Only take the latest result segment, not all accumulated results
+      const latestResult = e.results[e.results.length - 1]
+      if (!latestResult?.isFinal) return
+      const transcript = latestResult[0].transcript.trim()
+      if (transcript) {
+        setTextContent(prev => prev ? prev + '\n' + transcript : transcript)
+      }
     }
     recognition.onerror = () => { setIsListening(false); setStatusMsg('Recognition error.') }
     recognition.onend   = () => { setIsListening(false) }
