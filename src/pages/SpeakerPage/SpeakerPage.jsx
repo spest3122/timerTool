@@ -40,6 +40,10 @@ export default function SpeakerPage() {
   const hasRepeatedRef      = useRef(false)
   const isSpeakingRef       = useRef(false)
   const recognitionRef      = useRef(null)
+  // Tracks how many transcript lines have been inserted so far in a playback
+  // session, so subsequent (3) markers know where to insert relative to the
+  // live textarea content (which grows with each insertion).
+  const insertionOffsetRef  = useRef(0)
 
   // ── Speech synthesis ───────────────────────────────────────────────────────
   const speakLine = useCallback((text, onEnd) => {
@@ -59,6 +63,58 @@ export default function SpeakerPage() {
     setLastSpokenLine(text)
     speechSynthesis.speak(utterance)
   }, [filteredVoices, selectedVoiceIndex, speed, language])
+
+  // ── 3-second listen-and-resume helper ─────────────────────────────────────
+  // lineIdx: the 0-based index of the (3) line inside textLinesRef.current
+  // (the original snapshot). insertionOffsetRef compensates for lines already
+  // inserted by earlier (3) markers in this session.
+  const listenForThreeSeconds = useCallback((lineIdx, onDone) => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (!SR) {
+      // No recognition support — just wait 3 s then continue
+      setStatusMsg('🎙️ Listening 3 s…')
+      setTimeout(onDone, 3000)
+      return
+    }
+
+    const rec = new SR()
+    rec.continuous     = false
+    rec.interimResults = false
+    rec.lang           = LANG_DEFAULTS[language] || 'de-DE'
+
+    let transcript = ''
+    rec.onresult = (e) => {
+      transcript = Array.from(e.results).map(r => r[0].transcript).join(' ')
+    }
+
+    // Stop automatically after 3 seconds regardless of result
+    const timer = setTimeout(() => {
+      try { rec.stop() } catch (_) {}
+    }, 3000)
+
+    rec.onend = () => {
+      clearTimeout(timer)
+      if (transcript) {
+        // Adjusted index accounts for lines already inserted earlier in
+        // this playback session so the insertion point stays accurate.
+        const adjustedIdx = lineIdx + insertionOffsetRef.current
+        setTextContent(prev => {
+          const lines = prev.split('\n')
+          lines.splice(adjustedIdx + 1, 0, transcript)
+          return lines.join('\n')
+        })
+        insertionOffsetRef.current += 1
+      }
+      onDone()
+    }
+    rec.onerror = () => {
+      clearTimeout(timer)
+      onDone()
+    }
+
+    setStatusMsg('🎙️ Listening 3 s…')
+    rec.start()
+  }, [language])
 
   const speakNextLine = useCallback(() => {
     const lines = textLinesRef.current
@@ -85,6 +141,17 @@ export default function SpeakerPage() {
       return
     }
 
+    // ── Handle (3): pause TTS, listen 3 s, insert transcript after marker ───
+    if (currentLine === '(3)') {
+      const capturedIdx = idx   // capture before incrementing
+      currentLineIndexRef.current++
+      listenForThreeSeconds(capturedIdx, () => {
+        if (!isSpeakingRef.current) return
+        speakNextLine()
+      })
+      return
+    }
+
     setStatusMsg(`Line ${idx + 1} / ${lines.length}`)
 
     speakLine(currentLine, () => {
@@ -108,7 +175,7 @@ export default function SpeakerPage() {
         speakNextLine()
       }
     })
-  }, [speakLine, isLooping])
+  }, [speakLine, isLooping, listenForThreeSeconds])
 
   const handleStartSpeaking = () => {
     const lines = buildLinesFromText(textContent)
@@ -117,6 +184,7 @@ export default function SpeakerPage() {
     currentLineIndexRef.current = 0
     hasRepeatedRef.current      = false
     isSpeakingRef.current       = true
+    insertionOffsetRef.current  = 0
     speakNextLine()
   }
 
@@ -135,23 +203,24 @@ export default function SpeakerPage() {
   }
 
   const handleStop = () => {
-    isSpeakingRef.current = false
-    textLinesRef.current = []
+    isSpeakingRef.current       = false
+    textLinesRef.current        = []
     currentLineIndexRef.current = 0
-    hasRepeatedRef.current = false
+    hasRepeatedRef.current      = false
+    insertionOffsetRef.current  = 0
     if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel()
     setStatusMsg('Stopped.')
   }
 
-  const handleInsertRepeat = () => {
+  const handleInsertSymbol = (symbol) => {
     const input = document.getElementById('textInput')
     if (!input) return
-    const start = input.selectionStart
-    const end   = input.selectionEnd
+    const start   = input.selectionStart
+    const end     = input.selectionEnd
     const current = textContent
     const before  = current.substring(0, start)
     const after   = current.substring(end)
-    const injection = (before.endsWith('\n') || before === '') ? '↺\n' : '\n↺\n'
+    const injection = (before.endsWith('\n') || before === '') ? `${symbol}\n` : `\n${symbol}\n`
     setTextContent(before + injection + after)
     setTimeout(() => {
       input.focus()
@@ -276,10 +345,17 @@ export default function SpeakerPage() {
               <div className="spk-action-icons">
                 <button
                   className="spk-icon-btn"
-                  onClick={handleInsertRepeat}
+                  onClick={() => handleInsertSymbol('↺')}
                   title="Insert repeat symbol"
                 >
                   ↺
+                </button>
+                <button
+                  className="spk-icon-btn spk-icon-btn-listen"
+                  onClick={() => handleInsertSymbol('(3)')}
+                  title="Insert 3-second listen pause: pauses playback, records for 3 s, then resumes"
+                >
+                  (3)
                 </button>
                 <button
                   className="spk-icon-btn"
