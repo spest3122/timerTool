@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useSettings } from '../../context/SettingsContext'
 import './SpeakerPage.css'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -7,13 +8,6 @@ const LANG_DEFAULTS = {
   de: 'de-DE',
   en: 'en-US',
   es: 'es-ES',
-}
-
-function getVoicesForLang(lang) {
-  if (typeof speechSynthesis === 'undefined') return []
-  return speechSynthesis
-    .getVoices()
-    .filter(v => v.lang.startsWith(lang + '-') || v.lang.toLowerCase() === lang)
 }
 
 function buildLinesFromText(rawText) {
@@ -25,49 +19,27 @@ function buildLinesFromText(rawText) {
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export default function SpeakerPage() {
-  const [language,           setLanguageState]  = useState('de')
-  const [voices,             setVoices]         = useState([])
-  const [selectedVoiceName,  setSelectedVoiceName] = useState('')
-  const [speed,              setSpeed]          = useState(1.0)
-  const [textContent,        setTextContent]    = useState('')
-  const [isLooping,          setIsLooping]      = useState(false)
-  const [isListening,        setIsListening]    = useState(false)
-  const [statusMsg,          setStatusMsg]      = useState('')
-  const [lastSpokenLine,     setLastSpokenLine] = useState('')
+  // ── Shared settings (language & voice synced with SettingsDrawer) ──────────
+  const {
+    language,
+    filteredVoices,
+    selectedVoiceIndex,
+    setSelectedVoiceIndex,
+  } = useSettings()
+
+  const [speed,          setSpeed]          = useState(1.0)
+  const [textContent,    setTextContent]    = useState('')
+  const [isLooping,      setIsLooping]      = useState(false)
+  const [isListening,    setIsListening]    = useState(false)
+  const [statusMsg,      setStatusMsg]      = useState('')
+  const [lastSpokenLine, setLastSpokenLine] = useState('')
 
   // Mutable speech queue refs
-  const textLinesRef           = useRef([])
-  const currentLineIndexRef    = useRef(0)
-  const hasRepeatedRef         = useRef(false)
-  const isSpeakingRef          = useRef(false)
-  const recognitionRef         = useRef(null)
-
-  // ── Load voices ────────────────────────────────────────────────────────────
-  const loadVoices = useCallback((lang) => {
-    const v = getVoicesForLang(lang)
-    setVoices(v)
-    setSelectedVoiceName(v[0]?.name || '')
-  }, [])
-
-  const setLanguage = (lang) => {
-    setLanguageState(lang)
-    loadVoices(lang)
-  }
-
-  useEffect(() => {
-    const init = () => loadVoices(language)
-    init()
-    if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !== undefined) {
-      speechSynthesis.onvoiceschanged = init
-    }
-    return () => {
-      if (typeof speechSynthesis !== 'undefined') speechSynthesis.onvoiceschanged = null
-    }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    loadVoices(language)
-  }, [language, loadVoices])
+  const textLinesRef        = useRef([])
+  const currentLineIndexRef = useRef(0)
+  const hasRepeatedRef      = useRef(false)
+  const isSpeakingRef       = useRef(false)
+  const recognitionRef      = useRef(null)
 
   // ── Speech synthesis ───────────────────────────────────────────────────────
   const speakLine = useCallback((text, onEnd) => {
@@ -75,7 +47,8 @@ export default function SpeakerPage() {
     speechSynthesis.cancel()
     const utterance = new SpeechSynthesisUtterance(text)
     utterance.rate = speed
-    const selectedVoice = voices.find(v => v.name === selectedVoiceName)
+    const idx = parseInt(selectedVoiceIndex, 10)
+    const selectedVoice = !isNaN(idx) && filteredVoices[idx] ? filteredVoices[idx] : null
     if (selectedVoice) {
       utterance.voice = selectedVoice
       utterance.lang  = selectedVoice.lang
@@ -85,7 +58,7 @@ export default function SpeakerPage() {
     utterance.onend = onEnd || null
     setLastSpokenLine(text)
     speechSynthesis.speak(utterance)
-  }, [voices, selectedVoiceName, speed, language])
+  }, [filteredVoices, selectedVoiceIndex, speed, language])
 
   const speakNextLine = useCallback(() => {
     const lines = textLinesRef.current
@@ -102,9 +75,9 @@ export default function SpeakerPage() {
       }
     }
 
-    const idx  = currentLineIndexRef.current
+    const idx         = currentLineIndexRef.current
     const currentLine = lines[idx]?.trim()
-    const nextLine = lines[idx + 1]?.trim()
+    const nextLine    = lines[idx + 1]?.trim()
 
     if (!currentLine || currentLine === '↺') {
       currentLineIndexRef.current++
@@ -174,10 +147,10 @@ export default function SpeakerPage() {
     const input = document.getElementById('textInput')
     if (!input) return
     const start = input.selectionStart
-    const end = input.selectionEnd
+    const end   = input.selectionEnd
     const current = textContent
-    const before = current.substring(0, start)
-    const after = current.substring(end)
+    const before  = current.substring(0, start)
+    const after   = current.substring(end)
     const injection = (before.endsWith('\n') || before === '') ? '↺\n' : '\n↺\n'
     setTextContent(before + injection + after)
     setTimeout(() => {
@@ -199,7 +172,7 @@ export default function SpeakerPage() {
     }
 
     const recognition = new SR()
-    recognition.continuous    = true
+    recognition.continuous     = true
     recognition.interimResults = false
     recognition.lang           = LANG_DEFAULTS[language] || 'de-DE'
     recognition.onresult = (e) => {
@@ -242,18 +215,12 @@ export default function SpeakerPage() {
 
           {/* Right: Controls */}
           <div className="speaker-controls">
-            {/* Language */}
-            <div className="spk-field">
-              <label htmlFor="spkLangSelect">Language Configuration</label>
-              <select
-                id="spkLangSelect"
-                value={language}
-                onChange={e => setLanguage(e.target.value)}
-              >
-                <option value="de">Deutsch (German)</option>
-                <option value="en">English (US/UK)</option>
-                <option value="es">Español (Spanish)</option>
-              </select>
+            {/* Language & Voice info banner (read from shared settings) */}
+            <div className="spk-field spk-settings-info">
+              <span className="spk-settings-info-label">🌐 Language</span>
+              <span className="spk-settings-info-value">
+                {{ de: 'Deutsch (German)', en: 'English', es: 'Español (Spanish)' }[language] || language}
+              </span>
             </div>
 
             <button
@@ -264,17 +231,17 @@ export default function SpeakerPage() {
               {isListening ? '⬛ Stop Listening' : '🎙️ Start Listening (Microphone)'}
             </button>
 
-            {/* Voice */}
+            {/* Voice — synced with Settings drawer */}
             <div className="spk-field">
-              <label htmlFor="spkVoiceSelect">Matched Output Voice</label>
+              <label htmlFor="spkVoiceSelect">Output Voice</label>
               <select
                 id="spkVoiceSelect"
-                value={selectedVoiceName}
-                onChange={e => setSelectedVoiceName(e.target.value)}
+                value={selectedVoiceIndex}
+                onChange={e => setSelectedVoiceIndex(e.target.value)}
               >
                 <option value="">System default</option>
-                {voices.map((v, i) => (
-                  <option key={i} value={v.name}>{v.name} ({v.lang})</option>
+                {filteredVoices.map((v, i) => (
+                  <option key={i} value={i}>{v.name} ({v.lang})</option>
                 ))}
               </select>
             </div>

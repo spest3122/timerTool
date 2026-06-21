@@ -65,6 +65,29 @@
 }
 .spk-field select:focus { outline: none; border-color: #1976d2; }
 
+/* ── Settings info banner (read-only, synced from SettingsDrawer) ── */
+.spk-settings-info {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+.spk-settings-info-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #1e40af;
+}
+.spk-settings-info-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1d4ed8;
+}
+
 .spk-slider {
   width: 100%;
   accent-color: #1976d2;
