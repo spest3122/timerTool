@@ -18,7 +18,7 @@ const router = createBrowserRouter([
       { path: 'speaker',   element: <SpeakerPage /> },
     ],
   },
-])
+], { basename: '/timerTool' })
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
