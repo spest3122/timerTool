@@ -1,2 +1,5 @@
-/test
-/package.json
+node_modules/
+dist/
+.DS_Store
+*.local
+coverage/
