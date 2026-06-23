@@ -688,6 +688,9 @@ document.getElementById("weekNextBtn").addEventListener("click", () => {
 
 function handleMove(e) {
     if (liveMode || !dragging) return;
+    if (e.type === 'touchmove' && e.cancelable) {
+        e.preventDefault();
+    }
     const coords = getEventXAndY(e, clock);
     let angle = (Math.atan2(coords.y, coords.x) * 180) / Math.PI + 90;
     if (angle < 0) angle += 360;
