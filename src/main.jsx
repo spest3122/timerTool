@@ -6,6 +6,7 @@ import App from './App'
 import TimerPage from './pages/TimerPage/TimerPage'
 import QuizPage from './pages/QuizPage/QuizPage'
 import SpeakerPage from './pages/SpeakerPage/SpeakerPage'
+import DateSeasonPage from './pages/DateSeasonPage/DateSeasonPage'
 import './index.css'
 
 const router = createBrowserRouter([
@@ -16,6 +17,7 @@ const router = createBrowserRouter([
       { index: true,       element: <TimerPage /> },
       { path: 'quiz',      element: <QuizPage /> },
       { path: 'speaker',   element: <SpeakerPage /> },
+      { path: 'dates',     element: <DateSeasonPage /> },
     ],
   },
 ], { basename: '/timerTool' })
