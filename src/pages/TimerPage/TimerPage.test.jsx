@@ -60,9 +60,9 @@ describe('TimerPage Component', () => {
   })
 
   it('navigates days in practice mode', () => {
-    render(<TimerPage />)
-    const nextBtn = screen.getByRole('button', { name: /Next day/i })
-    const prevBtn = screen.getByRole('button', { name: /Previous day/i })
+    const { container } = render(<TimerPage />)
+    const nextBtn = container.querySelector('#weekNextBtn')
+    const prevBtn = container.querySelector('#weekPrevBtn')
     
     act(() => { fireEvent.click(nextBtn) })
     expect(mockSpeak).toHaveBeenCalled()
@@ -86,5 +86,52 @@ describe('TimerPage Component', () => {
     
     act(() => { fireEvent.click(weekBox) })
     expect(mockSpeak).toHaveBeenCalled()
+  })
+
+  // ── Date & Season panel tests ──────────────────────────────────────────────
+
+  it('renders Date & Season panel correctly', () => {
+    render(<TimerPage />)
+    expect(screen.getByLabelText('Date and season controls')).toBeInTheDocument()
+    expect(screen.getByLabelText('Multilingual translations')).toBeInTheDocument()
+  })
+
+  it('shows only active language translation row for Date & Season', () => {
+    // When language is German ('de')
+    const { rerender } = render(<TimerPage />)
+    expect(screen.getByText('German')).toBeInTheDocument()
+    expect(screen.queryByText('Spanish')).not.toBeInTheDocument()
+    expect(screen.queryByText('English')).not.toBeInTheDocument()
+
+    // Rerender as Spanish ('es')
+    useSettings.mockReturnValue({
+      language: 'es',
+      speak: mockSpeak
+    })
+    rerender(<TimerPage />)
+    expect(screen.getByText('Spanish')).toBeInTheDocument()
+    expect(screen.queryByText('German')).not.toBeInTheDocument()
+    expect(screen.queryByText('English')).not.toBeInTheDocument()
+  })
+
+  it('navigates Date & Season panel selectors', () => {
+    const { container } = render(<TimerPage />)
+
+    // Verify initial values (mocked date is today, let's just trigger selection clicks)
+    const nextDayBtn = container.querySelector('#ds-day-next')
+    const prevDayBtn = container.querySelector('#ds-day-prev')
+    const dayInput = container.querySelector('#ds-day-input')
+    const initialDay = dayInput.value
+
+    act(() => {
+      fireEvent.click(nextDayBtn)
+    })
+    // Value should change
+    expect(dayInput.value).not.toBe(initialDay)
+
+    act(() => {
+      fireEvent.click(prevDayBtn)
+    })
+    expect(dayInput.value).toBe(initialDay)
   })
 })

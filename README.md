@@ -17,6 +17,10 @@ The website structure is made up of three main components:
 ## TODO
 
 - [ ] add Design System
+- [ ] add data on Vocab page
+
+## DONE
+
 - [O] rewrite this project with React
 - [O] add testing
-- [ ] add Match with picture and text
+- [O] add Match with picture and text

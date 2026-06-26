@@ -45,6 +45,245 @@ function playClickSound() {
   } catch (_) { /* audio not available */ }
 }
 
+// ── Date & Season data ────────────────────────────────────────────────────────
+
+const DAYS   = Array.from({ length: 31 }, (_, i) => i + 1)
+const MONTHS = [
+  'January','February','March','April','May','June',
+  'July','August','September','October','November','December',
+]
+const YEARS = (() => {
+  const arr = []
+  for (let y = 1900; y <= 2030; y++) arr.push(y)
+  return arr
+})()
+const SEASONS = ['Spring', 'Summer', 'Autumn', 'Winter']
+
+const MONTH_ES = [
+  'enero','febrero','marzo','abril','mayo','junio',
+  'julio','agosto','septiembre','octubre','noviembre','diciembre',
+]
+const MONTH_DE = [
+  'Januar','Februar','März','April','Mai','Juni',
+  'Juli','August','September','Oktober','November','Dezember',
+]
+
+const SEASON_ES = { Spring:'primavera', Summer:'verano', Autumn:'otoño', Winter:'invierno' }
+const SEASON_DE = { Spring:'Frühling', Summer:'Sommer', Autumn:'Herbst', Winter:'Winter' }
+const SEASON_EN = { Spring:'spring', Summer:'summer', Autumn:'autumn', Winter:'winter' }
+
+const DE_DAY_ORDINAL = [
+  'ersten','zweiten','dritten','vierten','fünften',
+  'sechsten','siebten','achten','neunten','zehnten',
+  'elften','zwölften','dreizehnten','vierzehnten','fünfzehnten',
+  'sechzehnten','siebzehnten','achtzehnten','neunzehnten','zwanzigsten',
+  'einundzwanzigsten','zweiundzwanzigsten','dreiundzwanzigsten',
+  'vierundzwanzigsten','fünfundzwanzigsten','sechsundzwanzigsten',
+  'siebenundzwanzigsten','achtundzwanzigsten','neunundzwanzigsten',
+  'dreißigsten','einunddreißigsten',
+]
+
+function ordinal(n) {
+  const s = ['th', 'st', 'nd', 'rd']
+  const v = n % 100
+  return n + (s[(v - 20) % 10] || s[v] || s[0])
+}
+
+function buildTranslations(day, monthIdx, year, season) {
+  const enDate   = `the ${ordinal(day)} of ${MONTHS[monthIdx]}, ${year}`
+  const esDate   = `el ${day} de ${MONTH_ES[monthIdx]} de ${year}`
+  const deDate   = `der ${DE_DAY_ORDINAL[day - 1]} ${MONTH_DE[monthIdx]} ${year}`
+  const enSeason = `It is ${SEASON_EN[season]}`
+  const esSeason = `Es ${SEASON_ES[season]}`
+  const deSeason = `Es ist ${SEASON_DE[season]}`
+  return { enDate, esDate, deDate, enSeason, esSeason, deSeason }
+}
+
+// ── Date & Season sub-components ──────────────────────────────────────────────
+
+function ControlGroup({ id, label, options, index, onChange }) {
+  const [inputVal, setInputVal] = useState(() => String(options[index]))
+
+  useEffect(() => {
+    setInputVal(String(options[index]))
+  }, [index, options])
+
+  function handleArrow(dir) {
+    onChange((index + dir + options.length) % options.length)
+  }
+
+  function handleInputChange(e) {
+    setInputVal(e.target.value)
+  }
+
+  function commit(raw) {
+    const q = raw.trim().toLowerCase()
+    const exact = options.findIndex(o => String(o).toLowerCase() === q)
+    if (exact !== -1) { onChange(exact); return }
+    const prefix = options.findIndex(o => String(o).toLowerCase().startsWith(q))
+    if (prefix !== -1) { onChange(prefix); return }
+    const num = parseInt(q, 10)
+    if (!isNaN(num)) {
+      const ni = options.findIndex(o => Number(o) === num)
+      if (ni !== -1) { onChange(ni); return }
+    }
+    setInputVal(String(options[index]))
+  }
+
+  function handleBlur() { commit(inputVal) }
+
+  function handleKeyDown(e) {
+    if (e.key === 'Enter')      { e.target.blur() }
+    if (e.key === 'ArrowLeft')  { e.preventDefault(); handleArrow(-1) }
+    if (e.key === 'ArrowRight') { e.preventDefault(); handleArrow(1) }
+    if (e.key === 'ArrowUp')    { e.preventDefault(); handleArrow(-1) }
+    if (e.key === 'ArrowDown')  { e.preventDefault(); handleArrow(1) }
+  }
+
+  return (
+    <div className="ds-control-group" role="group" aria-labelledby={`${id}-label`}>
+      <div className="ds-group-label" id={`${id}-label`}>{label}</div>
+      <div className="ds-controls">
+        <button
+          className="ds-arrow-btn"
+          id={`${id}-prev`}
+          aria-label={`Previous ${label}`}
+          onClick={() => handleArrow(-1)}
+        >
+          ‹
+        </button>
+
+        <input
+          className="ds-text-input"
+          id={`${id}-input`}
+          type="text"
+          value={inputVal}
+          onChange={handleInputChange}
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
+          aria-label={`Type ${label}`}
+          autoComplete="off"
+          spellCheck="false"
+        />
+
+        <button
+          className="ds-arrow-btn"
+          id={`${id}-next`}
+          aria-label={`Next ${label}`}
+          onClick={() => handleArrow(1)}
+        >
+          ›
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function AudioBtn({ id, text, lang }) {
+  const [speaking, setSpeaking] = useState(false)
+
+  function handleClick() {
+    if (typeof speechSynthesis === 'undefined') return
+    speechSynthesis.cancel()
+
+    const utt = new SpeechSynthesisUtterance(text)
+    const all = speechSynthesis.getVoices()
+    const langKey = lang.split('-')[0]
+    const voices  = all.filter(
+      v => v.lang.startsWith(langKey + '-') || v.lang.toLowerCase() === langKey
+    )
+    const savedIdx = parseInt(localStorage.getItem(`timerTool_voice_${langKey}`), 10)
+    if (!isNaN(savedIdx) && voices[savedIdx]) {
+      utt.voice = voices[savedIdx]
+      utt.lang  = voices[savedIdx].lang
+    } else if (voices.length > 0) {
+      utt.voice = voices[0]
+      utt.lang  = voices[0].lang
+    } else {
+      utt.lang = lang
+    }
+
+    utt.rate = 0.92
+    utt.onstart = () => setSpeaking(true)
+    utt.onend   = () => setSpeaking(false)
+    utt.onerror = () => setSpeaking(false)
+    speechSynthesis.speak(utt)
+  }
+
+  return (
+    <button
+      className={`ds-audio-btn${speaking ? ' ds-speaking' : ''}`}
+      id={id}
+      onClick={handleClick}
+      aria-label="Play pronunciation"
+      title="Play audio"
+    >
+      {speaking ? '⏸' : '🔊'}
+    </button>
+  )
+}
+
+function TranslationRow({ flag, lang, langCode, dateText, seasonText, rowId }) {
+  return (
+    <div className="ds-trans-card" id={rowId}>
+      <div className="ds-card-header">
+        <span className="ds-card-flag">{flag}</span>
+        <span className="ds-card-lang">{lang}</span>
+      </div>
+      <div className="ds-card-body">
+        <div className="ds-card-row">
+          <span className="ds-card-text ds-date">{dateText}</span>
+          <AudioBtn id={`${rowId}-date-btn`} text={dateText} lang={langCode} />
+        </div>
+        <div className="ds-card-row">
+          <span className="ds-card-text ds-season">{seasonText}</span>
+          <AudioBtn id={`${rowId}-season-btn`} text={seasonText} lang={langCode} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── DateSeasonPanel ───────────────────────────────────────────────────────────
+
+function DateSeasonPanel() {
+  const { language } = useSettings()
+  const today = new Date()
+  const [dayIdx,    setDayIdx]    = useState(today.getDate() - 1)
+  const [monthIdx,  setMonthIdx]  = useState(today.getMonth())
+  const [yearIdx,   setYearIdx]   = useState(YEARS.indexOf(today.getFullYear()))
+  const [seasonIdx, setSeasonIdx] = useState(0)
+
+  const day    = DAYS[dayIdx]
+  const year   = YEARS[yearIdx]
+  const season = SEASONS[seasonIdx]
+  const tr     = buildTranslations(day, monthIdx, year, season)
+
+  return (
+    <div className="ds-panel" aria-label="Date and Season Pronunciation Trainer">
+      {/* Controls */}
+      <section className="ds-controls-panel" aria-label="Date and season controls">
+        <ControlGroup id="ds-day"    label="Day"    options={DAYS}    index={dayIdx}    onChange={setDayIdx} />
+        <ControlGroup id="ds-month"  label="Month"  options={MONTHS}  index={monthIdx}  onChange={setMonthIdx} />
+        <ControlGroup id="ds-year"   label="Year"   options={YEARS}   index={yearIdx}   onChange={setYearIdx} />
+        <ControlGroup id="ds-season" label="Season" options={SEASONS} index={seasonIdx} onChange={setSeasonIdx} />
+      </section>
+
+      {/* Translations */}
+      <section className="ds-translations" aria-label="Multilingual translations">
+        <div className="ds-section-title">Translations &amp; Pronunciations</div>
+        <div className="ds-trans-table">
+          {language === 'es' && <TranslationRow rowId="ds-row-es" flag="🇪🇸" lang="Spanish" langCode="es-ES" dateText={tr.esDate} seasonText={tr.esSeason} />}
+          {language === 'de' && <TranslationRow rowId="ds-row-de" flag="🇩🇪" lang="German"  langCode="de-DE" dateText={tr.deDate} seasonText={tr.deSeason} />}
+          {language === 'en' && <TranslationRow rowId="ds-row-en" flag="🇬🇧" lang="English" langCode="en-GB" dateText={tr.enDate} seasonText={tr.enSeason} />}
+        </div>
+      </section>
+    </div>
+  )
+}
+
+// ── TimerPage ─────────────────────────────────────────────────────────────────
+
 export default function TimerPage() {
   const { language, speak } = useSettings()
 
@@ -131,7 +370,6 @@ export default function TimerPage() {
   }
 
   // ── Drag handlers ───────────────────────────────────────────────────────────
-  // Use SVG coordinate transform so scaling doesn't break drag
   function getSVGCoords(e) {
     const svg = clockSvgRef.current
     if (!svg) return { x: 0, y: 0 }
@@ -342,6 +580,9 @@ export default function TimerPage() {
           <button id="practiceModeBtn" onClick={startPracticeMode}>{t.practiceBtn}</button>
         </div>
       </div>
+
+      {/* ── Date & Season Panel ── */}
+      <DateSeasonPanel />
     </div>
   )
 }
