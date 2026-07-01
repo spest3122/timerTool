@@ -44,6 +44,8 @@ export default function SpeakerPage() {
   // session, so subsequent (3) markers know where to insert relative to the
   // live textarea content (which grows with each insertion).
   const insertionOffsetRef  = useRef(0)
+  const textareaRef         = useRef(null)
+  const shouldScrollToBottomRef = useRef(false)
 
   // ── Speech synthesis ───────────────────────────────────────────────────────
   const speakLine = useCallback((text, onEnd) => {
@@ -98,6 +100,7 @@ export default function SpeakerPage() {
         // Adjusted index accounts for lines already inserted earlier in
         // this playback session so the insertion point stays accurate.
         const adjustedIdx = lineIdx + insertionOffsetRef.current
+        shouldScrollToBottomRef.current = true
         setTextContent(prev => {
           const lines = prev.split('\n')
           lines.splice(adjustedIdx + 1, 0, transcript)
@@ -250,6 +253,7 @@ export default function SpeakerPage() {
       if (!latestResult?.isFinal) return
       const transcript = latestResult[0].transcript.trim()
       if (transcript) {
+        shouldScrollToBottomRef.current = true
         setTextContent(prev => prev ? prev + '\n' + transcript : transcript)
       }
     }
@@ -269,6 +273,14 @@ export default function SpeakerPage() {
     }
   }, [])
 
+  // Scroll to bottom of textarea when speech recognition inserts new text
+  useEffect(() => {
+    if (shouldScrollToBottomRef.current && textareaRef.current) {
+      textareaRef.current.scrollTop = textareaRef.current.scrollHeight
+      shouldScrollToBottomRef.current = false
+    }
+  }, [textContent])
+
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <main className="speaker-main">
@@ -278,6 +290,7 @@ export default function SpeakerPage() {
           <div className="speaker-text-area-card">
             <textarea
               id="textInput"
+              ref={textareaRef}
               className="spk-textarea"
               placeholder="Type something here, or tap 'Start Listening' on the right to dictate text..."
               value={textContent}

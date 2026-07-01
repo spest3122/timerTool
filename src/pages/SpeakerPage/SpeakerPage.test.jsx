@@ -327,3 +327,89 @@ describe('(3) listen-pause feature – fallback when SpeechRecognition is unavai
     vi.useRealTimers();
   });
 });
+
+describe('SpeakerPage – auto-scroll features', () => {
+  it('scrolls textarea to the bottom when text is detected during speech recognition', async () => {
+    const SR = makeSRMock();
+    global.SpeechRecognition = SR;
+
+    renderSpeakerPage();
+    const textarea = screen.getByPlaceholderText(/Type something here/i);
+
+    // Mock scrollTop and scrollHeight in JSDOM
+    let scrollTopValue = 0;
+    Object.defineProperty(textarea, 'scrollTop', {
+      get() { return scrollTopValue; },
+      set(val) { scrollTopValue = val; },
+      configurable: true
+    });
+    Object.defineProperty(textarea, 'scrollHeight', {
+      get() { return 500; },
+      configurable: true
+    });
+
+    // Start listening
+    fireEvent.click(screen.getByText(/Start Listening/i));
+
+    // Wait for SR instance to be created
+    await waitFor(() => expect(SR.getInstance()).toBeTruthy());
+    const recInstance = SR.getInstance();
+
+    // Simulate speech input
+    act(() => {
+      recInstance.onresult({
+        results: [{ 0: { transcript: 'This is some text' }, isFinal: true }]
+      });
+    });
+
+    // Verify textarea value updated and scrolled to bottom
+    await waitFor(() => {
+      expect(textarea.value).toBe('This is some text');
+      expect(textarea.scrollTop).toBe(500);
+    });
+
+    // Stop listening
+    fireEvent.click(screen.getByText(/Stop Listening/i));
+  });
+
+  it('scrolls textarea to the bottom when text is detected during (3) listen-pause', async () => {
+    const SR = makeSRMock();
+    global.SpeechRecognition = SR;
+
+    renderSpeakerPage();
+    const textarea = screen.getByPlaceholderText(/Type something here/i);
+    fireEvent.change(textarea, { target: { value: 'wie heißt du?\n(3)' } });
+
+    // Mock scrollTop and scrollHeight
+    let scrollTopValue = 0;
+    Object.defineProperty(textarea, 'scrollTop', {
+      get() { return scrollTopValue; },
+      set(val) { scrollTopValue = val; },
+      configurable: true
+    });
+    Object.defineProperty(textarea, 'scrollHeight', {
+      get() { return 600; },
+      configurable: true
+    });
+
+    global.speechSynthesis.speak = vi.fn((utt) => { utt.onend?.(); });
+    fireEvent.click(screen.getByRole('button', { name: /Play Text/i }));
+
+    await waitFor(() => expect(SR.getInstance()).toBeTruthy());
+    const recInstance = SR.getInstance();
+
+    act(() => {
+      recInstance.onresult({
+        results: [{ 0: { transcript: 'Ich heiße Max' }, length: 1 }]
+      });
+    });
+    act(() => { recInstance.stop(); });
+
+    await waitFor(() => {
+      const lines = textarea.value.split('\n');
+      expect(lines).toContain('Ich heiße Max');
+      expect(textarea.scrollTop).toBe(600);
+    });
+  });
+});
+
