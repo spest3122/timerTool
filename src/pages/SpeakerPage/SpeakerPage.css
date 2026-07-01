@@ -289,10 +289,49 @@
   border: 1px solid #eaeaea;
 }
 
-.spk-textarea {
+.spk-textarea-container {
+  position: relative;
   width: 100%;
+  flex: 1;
   min-height: 500px;
+}
+
+.spk-textarea-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
   padding: 0;
+  margin: 0;
+  border: none;
+  font-size: 15px;
+  line-height: 1.7;
+  font-family: "Inter", monospace;
+  background: transparent;
+  color: transparent;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-y: auto;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+.spk-textarea-backdrop::-webkit-scrollbar {
+  display: none;
+}
+
+.spk-textarea {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
   border: none;
   font-size: 15px;
   line-height: 1.7;
@@ -301,6 +340,7 @@
   color: #333;
   resize: none;
   box-sizing: border-box;
+  overflow-y: auto;
 }
 .spk-textarea::placeholder {
   color: #888;
@@ -308,4 +348,14 @@
 }
 .spk-textarea:focus {
   outline: none;
+}
+.spk-textarea::selection {
+  background-color: #ffe082;
+  color: #263238;
+}
+
+.spk-remark-highlight {
+  background-color: #ffeb3b;
+  color: transparent;
+  border-radius: 2px;
 }
