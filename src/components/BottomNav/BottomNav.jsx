@@ -28,6 +28,12 @@ const VocabIcon = () => (
   </svg>
 )
 
+const RecorderIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2v20M17 5v14M22 9v6M7 5v14M2 9v6" />
+  </svg>
+)
+
 export default function BottomNav() {
   const cls = ({ isActive }) => `bottom-nav-item${isActive ? ' active' : ''}`
   return (
@@ -44,6 +50,10 @@ export default function BottomNav() {
 
       <NavLink to="/vocab" className={cls} aria-label="Vocab">
         <VocabIcon />Vocab
+      </NavLink>
+
+      <NavLink to="/recorder" className={cls} aria-label="Recorder">
+        <RecorderIcon />Recorder
       </NavLink>
     </>
   )

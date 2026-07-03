@@ -31,6 +31,12 @@ const VocabIcon = () => (
   </svg>
 )
 
+const RecorderIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2v20M17 5v14M22 9v6M7 5v14M2 9v6" />
+  </svg>
+)
+
 export default function NavSidebar() {
   return (
     <nav id="navSidebar" aria-label="Main navigation">
@@ -59,10 +65,14 @@ export default function NavSidebar() {
         <span className="nav-label">Speaker</span>
       </NavLink>
 
-
       <NavLink to="/vocab" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`} aria-label="Vocabulary trainer" title="Vocab">
         <VocabIcon />
         <span className="nav-label">Vocab</span>
+      </NavLink>
+
+      <NavLink to="/recorder" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`} aria-label="Voice recorder" title="Recorder">
+        <RecorderIcon />
+        <span className="nav-label">Recorder</span>
       </NavLink>
     </nav>
   )

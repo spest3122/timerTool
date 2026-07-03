@@ -6,8 +6,8 @@ import App from "./App";
 import TimerPage from "./pages/TimerPage/TimerPage";
 import QuizPage from "./pages/QuizPage/QuizPage";
 import SpeakerPage from "./pages/SpeakerPage/SpeakerPage";
-
 import VocabPage from "./pages/VocabPage/VocabPage";
+import RecorderPage from "./pages/RecorderPage/RecorderPage";
 import "./index.css";
 
 const router = createBrowserRouter(
@@ -20,6 +20,7 @@ const router = createBrowserRouter(
                 { path: "quiz", element: <QuizPage /> },
                 { path: "speaker", element: <SpeakerPage /> },
                 { path: "vocab", element: <VocabPage /> },
+                { path: "recorder", element: <RecorderPage /> },
             ],
         },
     ],
