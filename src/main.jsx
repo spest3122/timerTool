@@ -11,26 +11,26 @@ import RecorderPage from "./pages/RecorderPage/RecorderPage";
 import "./index.css";
 
 const router = createBrowserRouter(
-    [
-        {
-            path: "/",
-            element: <App />,
-            children: [
-                { index: true, element: <TimerPage /> },
-                { path: "quiz", element: <QuizPage /> },
-                { path: "speaker", element: <SpeakerPage /> },
-                { path: "vocab", element: <VocabPage /> },
-                { path: "recorder", element: <RecorderPage /> },
-            ],
-        },
-    ],
-    { basename: "/timerTool" },
+  [
+    {
+      path: "/",
+      element: <App />,
+      children: [
+        { index: true, element: <TimerPage /> },
+        { path: "quiz", element: <QuizPage /> },
+        { path: "speaker", element: <SpeakerPage /> },
+        { path: "vocab", element: <VocabPage /> },
+        { path: "recorder", element: <RecorderPage /> },
+      ],
+    },
+  ],
+  { basename: "/timerTool" },
 );
 
 createRoot(document.getElementById("root")).render(
-    <StrictMode>
-        <SettingsProvider>
-            <RouterProvider router={router} />
-        </SettingsProvider>
-    </StrictMode>,
+  <StrictMode>
+    <SettingsProvider>
+      <RouterProvider router={router} />
+    </SettingsProvider>
+  </StrictMode>,
 );
