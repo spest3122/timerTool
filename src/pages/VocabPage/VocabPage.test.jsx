@@ -112,15 +112,15 @@ describe('VocabPage — Focus View', () => {
   it('displays German translation after switching to DE', () => {
     renderPage()
     fireEvent.click(screen.getByRole('button', { name: /DE/i }))
-    expect(screen.getByText('Apfel')).toBeInTheDocument()
-    expect(screen.getByText(/Äpfel/i)).toBeInTheDocument()
+    expect(screen.getByText('der Apfel')).toBeInTheDocument()
+    expect(screen.getByText(/die Äpfel/i)).toBeInTheDocument()
   })
 
   it('displays Spanish translation after switching to ES', () => {
     renderPage()
     fireEvent.click(screen.getByRole('button', { name: 'ES' }))
-    expect(screen.getByText('Manzana')).toBeInTheDocument()
-    expect(screen.getByText(/Manzanas/i)).toBeInTheDocument()
+    expect(screen.getByText('la manzana')).toBeInTheDocument()
+    expect(screen.getByText(/las manzanas/i)).toBeInTheDocument()
   })
 
   it('renders Prev and Next navigation buttons', () => {
@@ -241,7 +241,7 @@ describe('VocabPage — Overview View', () => {
     renderPage()
     fireEvent.click(screen.getByRole('button', { name: 'DE' }))
     fireEvent.click(screen.getByRole('button', { name: /List/i }))
-    expect(screen.getByText('Apfel')).toBeInTheDocument()
+    expect(screen.getByText('der Apfel')).toBeInTheDocument()
     expect(screen.getByText('das Buch')).toBeInTheDocument()
   })
 

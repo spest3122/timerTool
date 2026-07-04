@@ -20,8 +20,8 @@ export const vocabularyData = [
     imageUrl: 'https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=600&auto=format&fit=crop',
     translations: {
       en: { singular: 'Apple',  plural: 'Apples'  },
-      de: { singular: 'Apfel',  plural: 'Äpfel'   },
-      es: { singular: 'Manzana', plural: 'Manzanas' },
+      de: { singular: 'der Apfel',  plural: 'die Äpfel'   },
+      es: { singular: 'la manzana', plural: 'las manzanas' },
     },
   },
   {
@@ -38,8 +38,8 @@ export const vocabularyData = [
     imageUrl: 'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=600&auto=format&fit=crop',
     translations: {
       en: { singular: 'Car',    plural: 'Cars'    },
-      de: { singular: 'Auto',   plural: 'Autos'   },
-      es: { singular: 'Coche',  plural: 'Coches'  },
+      de: { singular: 'das Auto',   plural: 'die Autos'   },
+      es: { singular: 'el coche',  plural: 'los coches'  },
     },
   },
   {
@@ -47,8 +47,8 @@ export const vocabularyData = [
     imageUrl: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=600&auto=format&fit=crop',
     translations: {
       en: { singular: 'Cat',    plural: 'Cats'    },
-      de: { singular: 'Katze',  plural: 'Katzen'  },
-      es: { singular: 'Gato',   plural: 'Gatos'   },
+      de: { singular: 'die Katze',  plural: 'die Katzen'  },
+      es: { singular: 'el gato',   plural: 'los gatos'   },
     },
   },
   {
@@ -56,8 +56,8 @@ export const vocabularyData = [
     imageUrl: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600&auto=format&fit=crop',
     translations: {
       en: { singular: 'Chair',  plural: 'Chairs'  },
-      de: { singular: 'Stuhl',  plural: 'Stühle'  },
-      es: { singular: 'Silla',  plural: 'Sillas'  },
+      de: { singular: 'der Stuhl',  plural: 'die Stühle'  },
+      es: { singular: 'la silla',  plural: 'las sillas'  },
     },
   },
   {
@@ -65,8 +65,8 @@ export const vocabularyData = [
     imageUrl: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&auto=format&fit=crop',
     translations: {
       en: { singular: 'Mountain', plural: 'Mountains' },
-      de: { singular: 'Berg',     plural: 'Berge'     },
-      es: { singular: 'Montaña',  plural: 'Montañas'  },
+      de: { singular: 'der Berg',     plural: 'die Berge'     },
+      es: { singular: 'la montaña',  plural: 'las montañas'  },
     },
   },
   {
@@ -74,17 +74,17 @@ export const vocabularyData = [
     imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop',
     translations: {
       en: { singular: 'Salad',  plural: 'Salads'  },
-      de: { singular: 'Salat',  plural: 'Salate'  },
-      es: { singular: 'Ensalada', plural: 'Ensaladas' },
+      de: { singular: 'der Salat',  plural: 'die Salate'  },
+      es: { singular: 'la ensalada', plural: 'las ensaladas' },
     },
   },
   {
     id: 8,
-    imageUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=600&auto=format&fit=crop',
+    imageUrl: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600&auto=format&fit=crop',
     translations: {
       en: { singular: 'Dog',   plural: 'Dogs'   },
-      de: { singular: 'Hund',  plural: 'Hunde'  },
-      es: { singular: 'Perro', plural: 'Perros' },
+      de: { singular: 'der Hund',  plural: 'die Hunde'  },
+      es: { singular: 'el perro', plural: 'los perros' },
     },
   },
   {
