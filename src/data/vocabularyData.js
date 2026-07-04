@@ -1,8 +1,18 @@
 /**
  * vocabularyData.js
  * Hardcoded vocabulary deck with English, German, and Spanish translations.
- * Each item has an Unsplash photo URL, singular, and plural forms.
+ * Each item has an image (Unsplash or locally imported), singular, and plural forms.
  */
+
+import bookImg from '../assets/book.jpg'
+import bicycleImg from '../assets/bicycle.jpg'
+import eraserImg from '../assets/eraser.jpg'
+import keyImg from '../assets/key.jpg'
+import pizzaImg from '../assets/pizza.jpg'
+import penImg from '../assets/pen.jpg'
+import rulerImg from '../assets/ruler.jpg'
+import pencilImg from '../assets/pencil.jpg'
+import scissorsImg from '../assets/scissors.jpg'
 
 export const vocabularyData = [
   {
@@ -16,11 +26,11 @@ export const vocabularyData = [
   },
   {
     id: 2,
-    imageUrl: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=600&auto=format&fit=crop',
+    imageUrl: bookImg,
     translations: {
       en: { singular: 'Book',   plural: 'Books'   },
-      de: { singular: 'Buch',   plural: 'Bücher'  },
-      es: { singular: 'Libro',  plural: 'Libros'  },
+      de: { singular: 'das Buch',   plural: 'die Bücher'  },
+      es: { singular: 'el libro',  plural: 'los libros'  },
     },
   },
   {
@@ -75,6 +85,78 @@ export const vocabularyData = [
       en: { singular: 'Dog',   plural: 'Dogs'   },
       de: { singular: 'Hund',  plural: 'Hunde'  },
       es: { singular: 'Perro', plural: 'Perros' },
+    },
+  },
+  {
+    id: 9,
+    imageUrl: pizzaImg,
+    translations: {
+      en: { singular: 'Pizza',   plural: 'Pizzas'   },
+      de: { singular: 'die Pizza',  plural: 'die Pizzas (or Pizzen)' },
+      es: { singular: 'la pizza',  plural: 'las pizzas' },
+    },
+  },
+  {
+    id: 10,
+    imageUrl: bicycleImg,
+    translations: {
+      en: { singular: 'Bicycle',  plural: 'Bicycles' },
+      de: { singular: 'das Fahrrad', plural: 'die Fahrräder' },
+      es: { singular: 'la bicicleta', plural: 'las bicicletas' },
+    },
+  },
+  {
+    id: 11,
+    imageUrl: penImg,
+    translations: {
+      en: { singular: 'Ballpoint pen', plural: 'Ballpoint pens' },
+      de: { singular: 'der Kugelschreiber', plural: 'die Kugelschreiber' },
+      es: { singular: 'el bolígrafo', plural: 'los bolígrafos' },
+    },
+  },
+  {
+    id: 12,
+    imageUrl: rulerImg,
+    translations: {
+      en: { singular: 'Ruler',   plural: 'Rulers'   },
+      de: { singular: 'das Lineal', plural: 'die Lineale'  },
+      es: { singular: 'la regla',  plural: 'las reglas'  },
+    },
+  },
+  {
+    id: 13,
+    imageUrl: eraserImg,
+    translations: {
+      en: { singular: 'Eraser',  plural: 'Erasers'  },
+      de: { singular: 'der Radiergummi', plural: 'die Radiergummis' },
+      es: { singular: 'la goma de borrar', plural: 'las gomas de borrar' },
+    },
+  },
+  {
+    id: 14,
+    imageUrl: pencilImg,
+    translations: {
+      en: { singular: 'Pencil',  plural: 'Pencils'  },
+      de: { singular: 'der Bleistift', plural: 'die Bleistifte' },
+      es: { singular: 'el lápiz',  plural: 'los lápices'  },
+    },
+  },
+  {
+    id: 15,
+    imageUrl: keyImg,
+    translations: {
+      en: { singular: 'Key',     plural: 'Keys'     },
+      de: { singular: 'der Schlüssel', plural: 'die Schlüssel' },
+      es: { singular: 'la llave',  plural: 'las llaves'  },
+    },
+  },
+  {
+    id: 16,
+    imageUrl: scissorsImg,
+    translations: {
+      en: { singular: 'Scissors', plural: 'Scissors' },
+      de: { singular: 'die Schere', plural: 'die Scheren'  },
+      es: { singular: 'la tijera', plural: 'las tijeras'  },
     },
   },
 ]
