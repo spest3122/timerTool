@@ -159,10 +159,50 @@ describe('VocabPage — Focus View', () => {
     expect(screen.getByText('27 / 27')).toBeInTheDocument()
   })
 
-  it('renders dot indicators for all 27 cards', () => {
+  it('renders a maximum of 5 dot indicators using a sliding window', () => {
     renderPage()
     const tabs = screen.getAllByRole('tab')
-    expect(tabs).toHaveLength(27)
+    expect(tabs).toHaveLength(5)
+  })
+
+  it('slides the dots window to keep the active dot centered when moving far', () => {
+    renderPage()
+    
+    // Default index is 0 (Apple), visible dots should be cards 1 to 5 (Apple, Book, Car, Cat, Chair)
+    let tabs = screen.getAllByRole('tab')
+    expect(tabs[0]).toHaveAttribute('aria-label', 'Card 1: Apple')
+    expect(tabs[4]).toHaveAttribute('aria-label', 'Card 5: Chair')
+    expect(tabs[0]).toHaveClass('active')
+
+    // Click Next 3 times to get to Card 4 (index 3, Cat)
+    const nextBtn = screen.getByRole('button', { name: /Next card/i })
+    fireEvent.click(nextBtn) // index 1
+    fireEvent.click(nextBtn) // index 2
+    fireEvent.click(nextBtn) // index 3
+    
+    // Now window should be centered on index 3.
+    // startIdx = Math.max(0, Math.min(3 - 2, 22)) = 1.
+    // Visible cards should be 2 to 6 (Book, Car, Cat, Chair, Mountain).
+    // Active tab should be the one at index 3 (which is index 3 - startIdx 1 = 2, i.e., tabs[2]).
+    tabs = screen.getAllByRole('tab')
+    expect(tabs).toHaveLength(5)
+    expect(tabs[0]).toHaveAttribute('aria-label', 'Card 2: Book')
+    expect(tabs[4]).toHaveAttribute('aria-label', 'Card 6: Mountain')
+    expect(tabs[2]).toHaveClass('active')
+
+    // Click Next many times to get to index 26 (last card: Cabinet)
+    // Currently at index 3, we need 23 more clicks.
+    for (let i = 0; i < 23; i++) fireEvent.click(nextBtn)
+    
+    // Now index is 26.
+    // startIdx = Math.max(0, Math.min(26 - 2, 22)) = 22.
+    // Visible cards should be 23 to 27 (Bicycle helmet, Umbrella, Box (Crate), Table, Cabinet (Cupboard)).
+    // Active tab should be the one at index 26 (which is index 26 - startIdx 22 = 4, i.e., tabs[4]).
+    tabs = screen.getAllByRole('tab')
+    expect(tabs).toHaveLength(5)
+    expect(tabs[0]).toHaveAttribute('aria-label', 'Card 23: Bicycle helmet')
+    expect(tabs[4]).toHaveAttribute('aria-label', 'Card 27: Cabinet (Cupboard)')
+    expect(tabs[4]).toHaveClass('active')
   })
 
   it('first dot is active by default', () => {
