@@ -98,9 +98,9 @@ describe('VocabPage — Focus View', () => {
     expect(screen.getByRole('region', { name: /Vocabulary focus card/i })).toBeInTheDocument()
   })
 
-  it('shows card counter "1 / 16"', () => {
+  it('shows card counter "1 / 27"', () => {
     renderPage()
-    expect(screen.getByText('1 / 16')).toBeInTheDocument()
+    expect(screen.getByText('1 / 27')).toBeInTheDocument()
   })
 
   it('displays the first word (Apple) in English by default', () => {
@@ -132,7 +132,7 @@ describe('VocabPage — Focus View', () => {
   it('advances to the next card when Next is clicked', () => {
     renderPage()
     fireEvent.click(screen.getByRole('button', { name: /Next card/i }))
-    expect(screen.getByText('2 / 16')).toBeInTheDocument()
+    expect(screen.getByText('2 / 27')).toBeInTheDocument()
     expect(screen.getByText('Book')).toBeInTheDocument()
   })
 
@@ -141,28 +141,28 @@ describe('VocabPage — Focus View', () => {
     // Go to card 2 first, then back to 1
     fireEvent.click(screen.getByRole('button', { name: /Next card/i }))
     fireEvent.click(screen.getByRole('button', { name: /Previous card/i }))
-    expect(screen.getByText('1 / 16')).toBeInTheDocument()
+    expect(screen.getByText('1 / 27')).toBeInTheDocument()
     expect(screen.getByText('Apple')).toBeInTheDocument()
   })
 
   it('wraps around from last card to first when Next is clicked', () => {
     renderPage()
-    // Click Next 16 times to loop around
+    // Click Next 27 times to loop around
     const nextBtn = screen.getByRole('button', { name: /Next card/i })
-    for (let i = 0; i < 16; i++) fireEvent.click(nextBtn)
-    expect(screen.getByText('1 / 16')).toBeInTheDocument()
+    for (let i = 0; i < 27; i++) fireEvent.click(nextBtn)
+    expect(screen.getByText('1 / 27')).toBeInTheDocument()
   })
 
   it('wraps around from first card to last when Prev is clicked', () => {
     renderPage()
     fireEvent.click(screen.getByRole('button', { name: /Previous card/i }))
-    expect(screen.getByText('16 / 16')).toBeInTheDocument()
+    expect(screen.getByText('27 / 27')).toBeInTheDocument()
   })
 
-  it('renders dot indicators for all 16 cards', () => {
+  it('renders dot indicators for all 27 cards', () => {
     renderPage()
     const tabs = screen.getAllByRole('tab')
-    expect(tabs).toHaveLength(16)
+    expect(tabs).toHaveLength(27)
   })
 
   it('first dot is active by default', () => {
@@ -176,7 +176,7 @@ describe('VocabPage — Focus View', () => {
     renderPage()
     const tabs = screen.getAllByRole('tab')
     fireEvent.click(tabs[3]) // jump to card 4 (Cat)
-    expect(screen.getByText('4 / 16')).toBeInTheDocument()
+    expect(screen.getByText('4 / 27')).toBeInTheDocument()
     expect(screen.getByText('Cat')).toBeInTheDocument()
   })
 
@@ -214,7 +214,7 @@ describe('VocabPage — Focus View', () => {
   it('restores the active card index from localStorage', () => {
     localStorage.setItem('vocab_index', '2')
     renderPage()
-    expect(screen.getByText('3 / 16')).toBeInTheDocument()
+    expect(screen.getByText('3 / 27')).toBeInTheDocument()
     expect(screen.getByText('Car')).toBeInTheDocument()
   })
 })
@@ -231,10 +231,10 @@ describe('VocabPage — Overview View', () => {
     expect(screen.getByRole('region', { name: /Vocabulary overview grid/i })).toBeInTheDocument()
   })
 
-  it('renders all 16 vocabulary items in the grid', () => {
+  it('renders all 27 vocabulary items in the grid', () => {
     switchToOverview()
     const items = screen.getAllByRole('listitem')
-    expect(items).toHaveLength(16)
+    expect(items).toHaveLength(27)
   })
 
   it('displays item labels in the currently selected language', () => {
@@ -252,7 +252,7 @@ describe('VocabPage — Overview View', () => {
     // Should be back in Focus view showing Cat
     expect(screen.getByRole('region', { name: /Vocabulary focus card/i })).toBeInTheDocument()
     expect(screen.getByText('Cat')).toBeInTheDocument()
-    expect(screen.getByText('4 / 16')).toBeInTheDocument()
+    expect(screen.getByText('4 / 27')).toBeInTheDocument()
   })
 
   it('keyboard Enter on an item opens the focus card', () => {

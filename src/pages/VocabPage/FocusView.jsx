@@ -31,6 +31,9 @@ export default function FocusView({ items, index, lang, onPrev, onNext, onDot })
   const translation = item.translations[lang]
   const total       = items.length
 
+  const startIdx = total <= 5 ? 0 : Math.max(0, Math.min(index - 2, total - 5))
+  const visibleIndices = Array.from({ length: Math.min(5, total) }, (_, k) => startIdx + k)
+
   return (
     <section className="focus-view" aria-label="Vocabulary focus card">
       {/* Card counter */}
@@ -79,16 +82,19 @@ export default function FocusView({ items, index, lang, onPrev, onNext, onDot })
         </button>
 
         <div className="focus-nav-dots" role="tablist" aria-label="Jump to card">
-          {items.map((it, i) => (
-            <button
-              key={it.id}
-              role="tab"
-              aria-selected={i === index}
-              aria-label={`Card ${i + 1}: ${it.translations[lang].singular}`}
-              className={`focus-nav-dot${i === index ? ' active' : ''}`}
-              onClick={() => onDot(i)}
-            />
-          ))}
+          {visibleIndices.map((i) => {
+            const it = items[i]
+            return (
+              <button
+                key={it.id}
+                role="tab"
+                aria-selected={i === index}
+                aria-label={`Card ${i + 1}: ${it.translations[lang].singular}`}
+                className={`focus-nav-dot${i === index ? ' active' : ''}`}
+                onClick={() => onDot(i)}
+              />
+            )
+          })}
         </div>
 
         <button

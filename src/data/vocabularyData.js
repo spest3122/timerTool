@@ -13,6 +13,18 @@ import penImg from '../assets/pen.jpg'
 import rulerImg from '../assets/ruler.jpg'
 import pencilImg from '../assets/pencil.jpg'
 import scissorsImg from '../assets/scissors.jpg'
+import kettleImg from '../assets/kettle.jpg'
+import tigerImg from '../assets/tiger.jpg'
+import bottleOpenerImg from '../assets/bottle_opener.jpg'
+import umbrellaImg from '../assets/umbrella.jpg'
+import tableImg from '../assets/table.jpg'
+import broomImg from '../assets/broom.jpg'
+import hairdryerImg from '../assets/hairdryer.jpg'
+import boxImg from '../assets/box.jpg'
+import refrigeratorImg from '../assets/refrigerator.jpg'
+import chairImg from '../assets/chair.jpg'
+import bicycleHelmetImg from '../assets/bicycle_helmet.jpg'
+import cabinetImg from '../assets/cabinet.jpg'
 
 export const vocabularyData = [
   {
@@ -53,7 +65,7 @@ export const vocabularyData = [
   },
   {
     id: 5,
-    imageUrl: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600&auto=format&fit=crop',
+    imageUrl: chairImg,
     translations: {
       en: { singular: 'Chair',  plural: 'Chairs'  },
       de: { singular: 'der Stuhl',  plural: 'die Stühle'  },
@@ -157,6 +169,105 @@ export const vocabularyData = [
       en: { singular: 'Scissors', plural: 'Scissors' },
       de: { singular: 'die Schere', plural: 'die Scheren'  },
       es: { singular: 'la tijera', plural: 'las tijeras'  },
+    },
+  },
+  {
+    id: 17,
+    imageUrl: refrigeratorImg,
+    translations: {
+      en: { singular: 'Refrigerator (Fridge)', plural: 'Refrigerators' },
+      de: { singular: 'der Kühlschrank', plural: 'die Kühlschränke' },
+      es: { singular: 'el refrigerador (or la nevera)', plural: 'los refrigeradores' },
+    },
+  },
+  {
+    id: 18,
+    imageUrl: bottleOpenerImg,
+    translations: {
+      en: { singular: 'Bottle opener', plural: 'Bottle openers' },
+      de: { singular: 'der Flaschenöffner', plural: 'die Flaschenöffner' },
+      es: { singular: 'el abridor de botellas', plural: 'los abridores de botellas' },
+    },
+  },
+  {
+    id: 19,
+    imageUrl: broomImg,
+    translations: {
+      en: { singular: 'Broom', plural: 'Brooms' },
+      de: { singular: 'der Besen', plural: 'die Besen' },
+      es: { singular: 'la escoba', plural: 'las escobas' },
+    },
+  },
+  {
+    id: 20,
+    imageUrl: hairdryerImg,
+    translations: {
+      en: { singular: 'Hairdryer', plural: 'Hairdryers' },
+      de: { singular: 'der Föhn', plural: 'die Föhne' },
+      es: { singular: 'el secador de pelo', plural: 'los secadores de pelo' },
+    },
+  },
+  {
+    id: 21,
+    imageUrl: kettleImg,
+    translations: {
+      en: { singular: 'Kettle', plural: 'Kettles' },
+      de: { singular: 'der Wasserkocher', plural: 'die Wasserkocher' },
+      es: { singular: 'el hervidor de agua', plural: 'los hervidores de agua' },
+    },
+  },
+  {
+    id: 22,
+    imageUrl: tigerImg,
+    translations: {
+      en: { singular: 'Tiger', plural: 'Tigers' },
+      de: { singular: 'der Tiger', plural: 'die Tiger' },
+      es: { singular: 'el tigre', plural: 'los tigres' },
+    },
+  },
+  {
+    id: 23,
+    imageUrl: bicycleHelmetImg,
+    translations: {
+      en: { singular: 'Bicycle helmet', plural: 'Bicycle helmets' },
+      de: { singular: 'der Fahrradhelm', plural: 'die Fahrradhelme' },
+      es: { singular: 'el casco de bicicleta', plural: 'los cascos de bicicleta' },
+    },
+  },
+  {
+    id: 24,
+    imageUrl: umbrellaImg,
+    translations: {
+      en: { singular: 'Umbrella', plural: 'Umbrellas' },
+      de: { singular: 'der Regenschirm', plural: 'die Regenschirme' },
+      es: { singular: 'el paraguas', plural: 'los paraguas' },
+    },
+  },
+  {
+    id: 25,
+    imageUrl: boxImg,
+    translations: {
+      en: { singular: 'Box (Crate)', plural: 'Boxes' },
+      de: { singular: 'die Kiste', plural: 'die Kisten' },
+      es: { singular: 'la caja (or la caja de madera)', plural: 'las cajas' },
+    },
+  },
+  {
+    id: 26,
+    imageUrl: tableImg,
+    translations: {
+      en: { singular: 'Table', plural: 'Tables' },
+      de: { singular: 'der Tisch', plural: 'die Tische' },
+      es: { singular: 'la mesa', plural: 'las mesas' },
+    },
+  },
+  {
+    id: 27,
+    imageUrl: cabinetImg,
+    translations: {
+      en: { singular: 'Cabinet (Cupboard)', plural: 'Cabinets' },
+      de: { singular: 'der Schrank', plural: 'die Schränke' },
+      es: { singular: 'el armario', plural: 'los armarios' },
     },
   },
 ]
