@@ -9,7 +9,7 @@
     bottom: 0;
     left: 0;
     right: 0;
-    height: 60px;
+    height: calc(60px + env(safe-area-inset-bottom, 0px));
     background: linear-gradient(90deg, #1565c0 0%, #1976d2 60%, #1e88e5 100%);
     z-index: 200;
     align-items: center;

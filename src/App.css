@@ -42,12 +42,13 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 /* ── Mobile overrides ── */
 @media (max-width: 768px) {
   .page-wrapper {
     margin-left: 0;
-    padding-bottom: 68px; /* room for bottom nav */
+    padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); /* room for bottom nav + safe area */
   }
 }
