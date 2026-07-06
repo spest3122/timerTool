@@ -25,6 +25,20 @@ import refrigeratorImg from '../assets/refrigerator.jpg'
 import chairImg from '../assets/chair.jpg'
 import bicycleHelmetImg from '../assets/bicycle_helmet.jpg'
 import cabinetImg from '../assets/cabinet.jpg'
+import glueImg from '../assets/glue.jpg'
+import mushroomImg from '../assets/mushroom.jpg'
+import treeImg from '../assets/tree.jpg'
+import floorImg from '../assets/floor.jpg'
+import receiptImg from '../assets/receipt.jpg'
+import clothesHangerImg from '../assets/clothes_hanger.jpg'
+import spongeImg from '../assets/sponge.jpg'
+import cookieImg from '../assets/cookie.jpg'
+import mopImg from '../assets/mop.jpg'
+import carpetImg from '../assets/carpet.jpg'
+import faucetImg from '../assets/faucet.jpg'
+import sinkImg from '../assets/sink.jpg'
+import mirrorImg from '../assets/mirror.jpg'
+import lightSwitchImg from '../assets/light_switch.jpg'
 
 export const vocabularyData = [
   {
@@ -268,6 +282,132 @@ export const vocabularyData = [
       en: { singular: 'Cabinet (Cupboard)', plural: 'Cabinets' },
       de: { singular: 'der Schrank', plural: 'die Schränke' },
       es: { singular: 'el armario', plural: 'los armarios' },
+    },
+  },
+  {
+    id: 28,
+    imageUrl: glueImg,
+    translations: {
+      en: { singular: 'Glue (or Glue stick)', plural: 'Glues' },
+      de: { singular: 'der Kleber', plural: 'die Kleber' },
+      es: { singular: 'el pegamento', plural: 'los pegamentos' },
+    },
+  },
+  {
+    id: 29,
+    imageUrl: mushroomImg,
+    translations: {
+      en: { singular: 'Mushroom', plural: 'Mushrooms' },
+      de: { singular: 'der Pilz', plural: 'die Pilze' },
+      es: { singular: 'el hongo (or la seta)', plural: 'los hongos' },
+    },
+  },
+  {
+    id: 30,
+    imageUrl: treeImg,
+    translations: {
+      en: { singular: 'Tree', plural: 'Trees' },
+      de: { singular: 'der Baum', plural: 'die Bäume' },
+      es: { singular: 'el árbol', plural: 'los árboles' },
+    },
+  },
+  {
+    id: 31,
+    imageUrl: floorImg,
+    translations: {
+      en: { singular: 'Floor (or Ground)', plural: 'Floors' },
+      de: { singular: 'der Boden', plural: 'die Böden' },
+      es: { singular: 'el suelo (or el piso)', plural: 'los suelos' },
+    },
+  },
+  {
+    id: 32,
+    imageUrl: faucetImg,
+    translations: {
+      en: { singular: 'Faucet (or Tap)', plural: 'Faucets' },
+      de: { singular: 'der Wasserhahn', plural: 'die Wasserhähne' },
+      es: { singular: 'el grifo', plural: 'los grifos' },
+    },
+  },
+  {
+    id: 33,
+    imageUrl: receiptImg,
+    translations: {
+      en: { singular: 'Receipt', plural: 'Receipts' },
+      de: { singular: 'der Beleg', plural: 'die Belege' },
+      es: { singular: 'el recibo (or el comprobante)', plural: 'los recibos' },
+    },
+  },
+  {
+    id: 34,
+    imageUrl: cookieImg,
+    translations: {
+      en: { singular: 'Cookie (or Biscuit)', plural: 'Cookies' },
+      de: { singular: 'der Keks', plural: 'die Kekse' },
+      es: { singular: 'la galleta', plural: 'las galletas' },
+    },
+  },
+  {
+    id: 35,
+    imageUrl: lightSwitchImg,
+    translations: {
+      en: { singular: 'Light switch', plural: 'Light switches' },
+      de: { singular: 'der Lichtschalter', plural: 'die Lichtschalter' },
+      es: { singular: 'el interruptor de luz', plural: 'los interruptores de luz' },
+    },
+  },
+  {
+    id: 36,
+    imageUrl: mopImg,
+    translations: {
+      en: { singular: 'Mop', plural: 'Mops' },
+      de: { singular: 'der Bodenwischer', plural: 'die Bodenwischer' },
+      es: { singular: 'la fregona (or el trapeador)', plural: 'las fregonas' },
+    },
+  },
+  {
+    id: 37,
+    imageUrl: sinkImg,
+    translations: {
+      en: { singular: 'Sink', plural: 'Sinks' },
+      de: { singular: 'das Waschbecken', plural: 'die Waschbecken' },
+      es: { singular: 'el lavabo (or el fregadero)', plural: 'los lavabos' },
+    },
+  },
+  {
+    id: 38,
+    imageUrl: spongeImg,
+    translations: {
+      en: { singular: 'Sponge', plural: 'Sponges' },
+      de: { singular: 'der Schwamm', plural: 'die Schwämme' },
+      es: { singular: 'la esponja', plural: 'las esponjas' },
+    },
+  },
+  {
+    id: 39,
+    imageUrl: clothesHangerImg,
+    translations: {
+      en: { singular: 'Clothes hanger', plural: 'Clothes hangers' },
+      de: { singular: 'der Kleiderbügel', plural: 'die Kleiderbügel' },
+      es: { singular: 'la percha (or el gancho de ropa)', plural: 'las perchas' },
+    },
+  },
+  {
+    id: 40,
+    imageUrl: carpetImg,
+    translations: {
+      en: { singular: 'Carpet (or Rug)', plural: 'Carpets' },
+      de: { singular: 'der Teppich', plural: 'die Teppiche' },
+      es: { singular: 'la alfombra', plural: 'las alfombras' },
+    },
+  },
+  {
+    id: 41,
+    imageUrl: mirrorImg,
+    translations: {
+      en: { singular: 'Mirror', plural: 'Mirrors' },
+      de: { singular: 'der Spiegel', plural: 'die Spiegel' },
+      es: { singular: 'el espejo', plural: 'los espejos' },
     },
   },
 ]

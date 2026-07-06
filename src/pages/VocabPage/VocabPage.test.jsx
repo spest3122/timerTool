@@ -98,9 +98,9 @@ describe('VocabPage — Focus View', () => {
     expect(screen.getByRole('region', { name: /Vocabulary focus card/i })).toBeInTheDocument()
   })
 
-  it('shows card counter "1 / 27"', () => {
+  it('shows card counter "1 / 41"', () => {
     renderPage()
-    expect(screen.getByText('1 / 27')).toBeInTheDocument()
+    expect(screen.getByText('1 / 41')).toBeInTheDocument()
   })
 
   it('displays the first word (Apple) in English by default', () => {
@@ -132,7 +132,7 @@ describe('VocabPage — Focus View', () => {
   it('advances to the next card when Next is clicked', () => {
     renderPage()
     fireEvent.click(screen.getByRole('button', { name: /Next card/i }))
-    expect(screen.getByText('2 / 27')).toBeInTheDocument()
+    expect(screen.getByText('2 / 41')).toBeInTheDocument()
     expect(screen.getByText('Book')).toBeInTheDocument()
   })
 
@@ -141,22 +141,22 @@ describe('VocabPage — Focus View', () => {
     // Go to card 2 first, then back to 1
     fireEvent.click(screen.getByRole('button', { name: /Next card/i }))
     fireEvent.click(screen.getByRole('button', { name: /Previous card/i }))
-    expect(screen.getByText('1 / 27')).toBeInTheDocument()
+    expect(screen.getByText('1 / 41')).toBeInTheDocument()
     expect(screen.getByText('Apple')).toBeInTheDocument()
   })
 
   it('wraps around from last card to first when Next is clicked', () => {
     renderPage()
-    // Click Next 27 times to loop around
+    // Click Next 41 times to loop around
     const nextBtn = screen.getByRole('button', { name: /Next card/i })
-    for (let i = 0; i < 27; i++) fireEvent.click(nextBtn)
-    expect(screen.getByText('1 / 27')).toBeInTheDocument()
+    for (let i = 0; i < 41; i++) fireEvent.click(nextBtn)
+    expect(screen.getByText('1 / 41')).toBeInTheDocument()
   })
 
   it('wraps around from first card to last when Prev is clicked', () => {
     renderPage()
     fireEvent.click(screen.getByRole('button', { name: /Previous card/i }))
-    expect(screen.getByText('27 / 27')).toBeInTheDocument()
+    expect(screen.getByText('41 / 41')).toBeInTheDocument()
   })
 
   it('renders a maximum of 5 dot indicators using a sliding window', () => {
@@ -190,18 +190,18 @@ describe('VocabPage — Focus View', () => {
     expect(tabs[4]).toHaveAttribute('aria-label', 'Card 6: Mountain')
     expect(tabs[2]).toHaveClass('active')
 
-    // Click Next many times to get to index 26 (last card: Cabinet)
-    // Currently at index 3, we need 23 more clicks.
-    for (let i = 0; i < 23; i++) fireEvent.click(nextBtn)
+    // Click Next many times to get to index 40 (last card: Mirror)
+    // Currently at index 3, we need 37 more clicks.
+    for (let i = 0; i < 37; i++) fireEvent.click(nextBtn)
     
-    // Now index is 26.
-    // startIdx = Math.max(0, Math.min(26 - 2, 22)) = 22.
-    // Visible cards should be 23 to 27 (Bicycle helmet, Umbrella, Box (Crate), Table, Cabinet (Cupboard)).
-    // Active tab should be the one at index 26 (which is index 26 - startIdx 22 = 4, i.e., tabs[4]).
+    // Now index is 40.
+    // startIdx = Math.max(0, Math.min(40 - 2, 36)) = 36.
+    // Visible cards should be 37 to 41 (Sink, Sponge, Clothes hanger, Carpet (or Rug), Mirror).
+    // Active tab should be the one at index 40 (which is index 40 - startIdx 36 = 4, i.e., tabs[4]).
     tabs = screen.getAllByRole('tab')
     expect(tabs).toHaveLength(5)
-    expect(tabs[0]).toHaveAttribute('aria-label', 'Card 23: Bicycle helmet')
-    expect(tabs[4]).toHaveAttribute('aria-label', 'Card 27: Cabinet (Cupboard)')
+    expect(tabs[0]).toHaveAttribute('aria-label', 'Card 37: Sink')
+    expect(tabs[4]).toHaveAttribute('aria-label', 'Card 41: Mirror')
     expect(tabs[4]).toHaveClass('active')
   })
 
@@ -216,7 +216,7 @@ describe('VocabPage — Focus View', () => {
     renderPage()
     const tabs = screen.getAllByRole('tab')
     fireEvent.click(tabs[3]) // jump to card 4 (Cat)
-    expect(screen.getByText('4 / 27')).toBeInTheDocument()
+    expect(screen.getByText('4 / 41')).toBeInTheDocument()
     expect(screen.getByText('Cat')).toBeInTheDocument()
   })
 
@@ -254,7 +254,7 @@ describe('VocabPage — Focus View', () => {
   it('restores the active card index from localStorage', () => {
     localStorage.setItem('vocab_index', '2')
     renderPage()
-    expect(screen.getByText('3 / 27')).toBeInTheDocument()
+    expect(screen.getByText('3 / 41')).toBeInTheDocument()
     expect(screen.getByText('Car')).toBeInTheDocument()
   })
 })
@@ -271,10 +271,10 @@ describe('VocabPage — Overview View', () => {
     expect(screen.getByRole('region', { name: /Vocabulary overview grid/i })).toBeInTheDocument()
   })
 
-  it('renders all 27 vocabulary items in the grid', () => {
+  it('renders all 41 vocabulary items in the grid', () => {
     switchToOverview()
     const items = screen.getAllByRole('listitem')
-    expect(items).toHaveLength(27)
+    expect(items).toHaveLength(41)
   })
 
   it('displays item labels in the currently selected language', () => {
@@ -292,7 +292,7 @@ describe('VocabPage — Overview View', () => {
     // Should be back in Focus view showing Cat
     expect(screen.getByRole('region', { name: /Vocabulary focus card/i })).toBeInTheDocument()
     expect(screen.getByText('Cat')).toBeInTheDocument()
-    expect(screen.getByText('4 / 27')).toBeInTheDocument()
+    expect(screen.getByText('4 / 41')).toBeInTheDocument()
   })
 
   it('keyboard Enter on an item opens the focus card', () => {
