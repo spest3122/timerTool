@@ -8,6 +8,7 @@ import QuizPage from "./pages/QuizPage/QuizPage";
 import SpeakerPage from "./pages/SpeakerPage/SpeakerPage";
 import VocabPage from "./pages/VocabPage/VocabPage";
 import RecorderPage from "./pages/RecorderPage/RecorderPage";
+import ConvoPage from "./pages/ConvoPage/ConvoPage";
 import "./index.css";
 
 const router = createHashRouter([
@@ -20,6 +21,7 @@ const router = createHashRouter([
       { path: "speaker", element: <SpeakerPage /> },
       { path: "vocab", element: <VocabPage /> },
       { path: "recorder", element: <RecorderPage /> },
+      { path: "convo",    element: <ConvoPage /> },
     ],
   },
 ]);
