@@ -243,26 +243,27 @@
 .cp-tts-btn:hover  { background: #dbeafe; border-color: #93c5fd; }
 .cp-tts-btn:active { transform: scale(0.95); }
 
-/* AI continue button */
-.cp-continue-btn {
-  margin-top: 14px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 9px 18px;
-  border-radius: 10px;
-  border: none;
-  background: #1976d2;
-  color: #fff;
-  font-size: 0.88rem;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background 0.15s, transform 0.1s;
+/* Auto-next dot indicator (replaces Continue button) */
+.cp-auto-next {
+  display: inline-flex;
+  gap: 4px;
+  margin-top: 10px;
+  height: 6px;
 }
 
-.cp-continue-btn:hover  { background: #1565c0; }
-.cp-continue-btn:active { transform: scale(0.96); }
+.cp-auto-next::before,
+.cp-auto-next::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #93c5fd;
+  animation: cp-mic-pulse 1s ease-in-out infinite;
+}
+
+.cp-auto-next::after {
+  animation-delay: 0.3s;
+}
 
 /* ── User turn input area ────────────────────────────────────── */
 .cp-hint {
@@ -417,10 +418,15 @@
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
   z-index: 600;
+  /* Allow the modal to scroll on small screens */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 20px;
+  /* top/bottom padding gives breathing room; safe-area covers notch devices */
+  padding: env(safe-area-inset-top, 20px) 16px env(safe-area-inset-bottom, 20px);
+  padding-top: max(20px, env(safe-area-inset-top));
   animation: cp-fade-in 0.2s ease;
 }
 
@@ -430,6 +436,8 @@
   padding: 36px 32px 32px;
   width: 100%;
   max-width: 540px;
+  /* Ensure the card never exceeds the viewport; scroll lives on the overlay */
+  margin: auto 0;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
   animation: cp-modal-pop 0.25s ease;
 }
@@ -452,6 +460,36 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
   margin-bottom: 28px;
+}
+
+/* 2-column variant used when only 2 characters shown (per-language) */
+.cp-char-cards--2col {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+/* Language chip shown in modal header */
+.cp-lang-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  padding: 4px 12px;
+  margin-bottom: 14px;
+  font-size: 0.8rem;
+}
+
+.cp-lang-chip-flag { font-size: 1rem; line-height: 1; }
+
+.cp-lang-chip-label {
+  font-weight: 700;
+  color: #111827;
+}
+
+.cp-lang-chip-hint {
+  color: #9ca3af;
+  font-size: 0.75rem;
 }
 
 .cp-char-card {
@@ -505,6 +543,21 @@
   color: #9ca3af;
   line-height: 1.45;
   margin: 0;
+}
+
+/* Role badge below name */
+.cp-char-role-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+  border-radius: 20px;
+  padding: 2px 8px;
+  margin-bottom: 8px;
+  transition: color 0.18s, border-color 0.18s;
 }
 
 .cp-start-btn {

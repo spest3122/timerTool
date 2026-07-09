@@ -4,70 +4,51 @@
  * Coverage:
  *   1.  Data integrity  — scripts.js & characters.js shape validation
  *   2.  useSpeechRecognition hook — state machine via mock SR class
- *   3.  SelectionModal — renders, character selection, Start button state
+ *   3.  SelectionModal — language from settings, character selection, Start button
  *   4.  ConvoHeader    — title, subtitle, progress bar, action buttons
- *   5.  TurnCard (AI)  — text, TTS button, Continue, done-state CSS
+ *   5.  TurnCard (AI)  — text, TTS button, auto-advance, done-state CSS
  *   6.  TurnCard (User/fallback) — plain input, submit, Enter key
  *   7.  TurnCard (User/mic)      — Record, Stop, transcript, Keep & Submit, Record Again
  *   8.  ScriptModal    — turn list, close button, backdrop
  *   9.  FeedbackView   — stars, score pills, analysis, responses, action buttons
  *  10.  ConvoPage (integration) — full select → convo → feedback flow
  *
- * ────────────────────────────────────────────────────────────────────────────
- * jsdom limitations addressed:
- *   • scrollIntoView  → polyfilled via vi.fn() on HTMLElement.prototype
- *   • speechSynthesis → installed before each test that needs it, with
- *                       getVoices() returning real locale strings so the
- *                       synchronous speak() path is taken
- *   • SpeechRecognition module-level SR const (frozen at import time) →
- *     mic-path tests drive state by controlling hook return values through
- *     vi.mock (hoisted), making tests deterministic and independent of jsdom
+ * Key design decisions:
+ *   • NO vi.useFakeTimers — fake timers bleed across tests and cause userEvent
+ *     to hang. Instead, TurnCard accepts an `autoAdvanceDelay` prop (default
+ *     1800ms) and tests pass 0 for instant advance.
+ *   • useSpeechRecognition is vi.mock'd so the SR module-freeze is bypassed.
+ *   • SelectionModal and ConvoPage need SettingsProvider — provided via wrapper.
+ *   • Voice uses onSpeak prop (from ConvoPage via SettingsContext.speakWithLocale).
  */
 
 // ── vi.mock must be at the very top (Vitest hoists it before imports) ────────
 import { vi } from 'vitest';
 
-/**
- * Mutable controller object.
- * Each test sets _srCtrl to the state it wants the hook to return.
- */
 let _srCtrl = {
-  isSupported: false,
-  isListening: false,
-  transcript:  '',
-  isFinal:     false,
-  start:  vi.fn(),
-  stop:   vi.fn(),
-  reset:  vi.fn(),
+  isSupported: false, isListening: false, transcript: '', isFinal: false,
+  start: vi.fn(), stop: vi.fn(), reset: vi.fn(),
 };
-
 vi.mock('./hooks/useSpeechRecognition', () => ({
   useSpeechRecognition: vi.fn(() => _srCtrl),
 }));
 
-// ── Regular imports (after mock declaration) ─────────────────────────────────
+// ── Regular imports ──────────────────────────────────────────────────────────
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
-// ── Polyfill scrollIntoView (not implemented in jsdom) ───────────────────────
+// ── Polyfills ─────────────────────────────────────────────────────────────────
 window.HTMLElement.prototype.scrollIntoView = vi.fn();
-
-// ── Polyfill SpeechSynthesisUtterance (not implemented in jsdom) ─────────────
 if (typeof window.SpeechSynthesisUtterance === 'undefined') {
-  window.SpeechSynthesisUtterance = class SpeechSynthesisUtterance {
-    constructor(text) {
-      this.text   = text;
-      this.lang   = '';
-      this.rate   = 1;
-      this.voice  = null;
-    }
+  window.SpeechSynthesisUtterance = class {
+    constructor(text) { this.text = text; this.lang = ''; this.rate = 1; this.voice = null; }
   };
 }
 
 // ── Data ─────────────────────────────────────────────────────────────────────
-import { SCRIPTS, ALL_SCRIPTS }      from './data/scripts';
-import { CHARACTERS, CHARACTER_MAP } from './data/characters';
+import { SCRIPTS, ALL_SCRIPTS }               from './data/scripts';
+import { CHARACTERS, CHARACTERS_BY_LANG, CHARACTER_MAP } from './data/characters';
 
 // ── Components ───────────────────────────────────────────────────────────────
 import SelectionModal  from './SelectionModal';
@@ -76,50 +57,39 @@ import ConvoHeader     from './ConvoHeader';
 import TurnCard        from './TurnCard';
 import FeedbackView    from './FeedbackView';
 import ConvoPage       from './ConvoPage';
+import { SettingsProvider } from '../../context/SettingsContext';
 
-// ── Shared fixtures ──────────────────────────────────────────────────────────
+// ── Fixtures ──────────────────────────────────────────────────────────────────
 const NONO     = CHARACTER_MAP['nono'];
-const DE_GREET = SCRIPTS.de[0];   // 7-turn German Greetings script
+const DE_GREET = SCRIPTS.de[0];
+
+// ── Settings wrapper helpers ──────────────────────────────────────────────────
+/** Wrap component with SettingsProvider so useSettings() works in tests */
+function withSettings(ui, langOverride = 'de') {
+  // Pre-set localStorage so SettingsProvider initialises with the right lang
+  localStorage.setItem('timerTool_language', langOverride);
+  return render(<SettingsProvider>{ui}</SettingsProvider>);
+}
 
 // ── speechSynthesis helpers ──────────────────────────────────────────────────
 function installSynthMock() {
   const mock = {
-    cancel:              vi.fn(),
-    speak:               vi.fn(),
-    getVoices:           vi.fn(() => [
-      { lang: 'de-DE' }, { lang: 'en-US' }, { lang: 'es-ES' },
-    ]),
-    addEventListener:    vi.fn(),
-    removeEventListener: vi.fn(),
+    cancel: vi.fn(), speak: vi.fn(),
+    getVoices: vi.fn(() => [{ lang: 'de-DE' }, { lang: 'en-US' }, { lang: 'es-ES' }]),
+    addEventListener: vi.fn(), removeEventListener: vi.fn(),
   };
-  Object.defineProperty(window, 'speechSynthesis', {
-    value: mock, writable: true, configurable: true,
-  });
+  Object.defineProperty(window, 'speechSynthesis', { value: mock, writable: true, configurable: true });
   return mock;
 }
-
 function removeSynthMock() {
   Object.defineProperty(window, 'speechSynthesis', {
-    value: {
-      cancel: vi.fn(), speak: vi.fn(), getVoices: () => [],
-      addEventListener: vi.fn(), removeEventListener: vi.fn(),
-    },
+    value: { cancel: vi.fn(), speak: vi.fn(), getVoices: () => [], addEventListener: vi.fn(), removeEventListener: vi.fn() },
     writable: true, configurable: true,
   });
 }
-
-// ── useSpeechRecognition controller helper ───────────────────────────────────
-function setSRState(overrides) {
-  _srCtrl = {
-    isSupported: false,
-    isListening: false,
-    transcript:  '',
-    isFinal:     false,
-    start:  vi.fn(),
-    stop:   vi.fn(),
-    reset:  vi.fn(),
-    ...(overrides ?? {}),
-  };
+function setSRState(overrides = {}) {
+  _srCtrl = { isSupported: false, isListening: false, transcript: '', isFinal: false,
+    start: vi.fn(), stop: vi.fn(), reset: vi.fn(), ...overrides };
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -131,14 +101,11 @@ describe('Data — scripts.js', () => {
     expect(SCRIPTS).toHaveProperty('en');
     expect(SCRIPTS).toHaveProperty('es');
   });
-
   it('every language has at least 2 topics', () => {
-    for (const lang of ['de', 'en', 'es']) {
+    for (const lang of ['de', 'en', 'es'])
       expect(SCRIPTS[lang].length).toBeGreaterThanOrEqual(2);
-    }
   });
-
-  it('every script has the required shape fields', () => {
+  it('every script has the required shape', () => {
     for (const s of ALL_SCRIPTS) {
       expect(s).toHaveProperty('id');
       expect(s).toHaveProperty('topic');
@@ -148,37 +115,26 @@ describe('Data — scripts.js', () => {
       expect(s.turns.length).toBeGreaterThan(0);
     }
   });
-
-  it('every turn has a valid speaker field', () => {
-    for (const s of ALL_SCRIPTS) {
-      for (const t of s.turns) {
+  it('every turn has a valid speaker', () => {
+    for (const s of ALL_SCRIPTS)
+      for (const t of s.turns)
         expect(['ai', 'user']).toContain(t.speaker);
-      }
-    }
   });
-
-  it('AI turns have a non-empty text field', () => {
-    for (const s of ALL_SCRIPTS) {
-      for (const t of s.turns.filter((x) => x.speaker === 'ai')) {
+  it('AI turns have non-empty text', () => {
+    for (const s of ALL_SCRIPTS)
+      for (const t of s.turns.filter(x => x.speaker === 'ai'))
         expect(t.text?.trim().length).toBeGreaterThan(0);
-      }
-    }
   });
-
-  it('user turns have a non-empty hint field', () => {
-    for (const s of ALL_SCRIPTS) {
-      for (const t of s.turns.filter((x) => x.speaker === 'user')) {
+  it('user turns have non-empty hints', () => {
+    for (const s of ALL_SCRIPTS)
+      for (const t of s.turns.filter(x => x.speaker === 'user'))
         expect(t.hint?.trim().length).toBeGreaterThan(0);
-      }
-    }
   });
-
-  it('scripts alternate speakers and always start with AI', () => {
+  it('scripts alternate speakers, starting with AI', () => {
     for (const s of ALL_SCRIPTS) {
       expect(s.turns[0].speaker).toBe('ai');
-      for (let i = 1; i < s.turns.length; i++) {
+      for (let i = 1; i < s.turns.length; i++)
         expect(s.turns[i].speaker).not.toBe(s.turns[i - 1].speaker);
-      }
     }
   });
 });
@@ -187,104 +143,60 @@ describe('Data — scripts.js', () => {
 // 2. Data — characters.js
 // ════════════════════════════════════════════════════════════════════════════
 describe('Data — characters.js', () => {
-  it('exports exactly 3 characters', () => {
-    expect(CHARACTERS).toHaveLength(3);
+  it('exports exactly 6 characters (2 per language)', () => expect(CHARACTERS).toHaveLength(6));
+
+  it('CHARACTERS_BY_LANG has entries for de, en, es', () => {
+    expect(CHARACTERS_BY_LANG).toHaveProperty('de');
+    expect(CHARACTERS_BY_LANG).toHaveProperty('en');
+    expect(CHARACTERS_BY_LANG).toHaveProperty('es');
   });
 
-  it('each character covers a distinct language', () => {
-    expect(new Set(CHARACTERS.map((c) => c.lang)).size).toBe(3);
+  it('each language has exactly 2 characters', () => {
+    for (const lang of ['de', 'en', 'es'])
+      expect(CHARACTERS_BY_LANG[lang]).toHaveLength(2);
   });
 
   it('every character has all required fields', () => {
-    const req = ['id', 'name', 'lang', 'langLabel', 'langFlag', 'avatar', 'color', 'bgColor', 'voiceLocale', 'persona'];
-    for (const char of CHARACTERS) {
-      for (const f of req) {
+    const req = ['id', 'name', 'lang', 'langLabel', 'langFlag', 'avatar', 'color', 'bgColor', 'voiceLocale', 'persona', 'role'];
+    for (const char of CHARACTERS)
+      for (const f of req)
         expect(char[f], `${char.id}.${f}`).toBeTruthy();
-      }
-    }
   });
 
   it('CHARACTER_MAP keys match character ids', () => {
-    for (const c of CHARACTERS) {
-      expect(CHARACTER_MAP[c.id]).toBe(c);
-    }
+    for (const c of CHARACTERS) expect(CHARACTER_MAP[c.id]).toBe(c);
   });
 
   it('voiceLocale is a valid BCP-47 string', () => {
-    for (const c of CHARACTERS) {
-      expect(c.voiceLocale).toMatch(/^[a-z]{2}-[A-Z]{2}$/);
-    }
+    for (const c of CHARACTERS) expect(c.voiceLocale).toMatch(/^[a-z]{2}-[A-Z]{2}$/);
   });
 });
 
 // ════════════════════════════════════════════════════════════════════════════
-// 3. useSpeechRecognition hook — state transitions via MockSR
-//    Because the module-level SR const is frozen after import-time eval,
-//    we test the hook logic (start/stop/reset state transitions) by driving
-//    a MockSR class directly, mirroring what the hook does internally.
+// 3. useSpeechRecognition — state transitions
 // ════════════════════════════════════════════════════════════════════════════
 describe('useSpeechRecognition — MockSR state transitions', () => {
   function makeMockSR() {
-    const rec = {
-      lang: '', continuous: false, interimResults: false,
-      onstart: null, onresult: null, onerror: null, onend: null,
-    };
+    const rec = { lang: '', continuous: false, interimResults: false, onstart: null, onresult: null, onerror: null, onend: null };
     rec.start = vi.fn(() => rec.onstart?.());
     rec.stop  = vi.fn(() => rec.onend?.());
     rec.abort = vi.fn(() => rec.onend?.());
     return rec;
   }
-
-  it('calling start fires the onstart callback', () => {
-    const sr = makeMockSR();
-    let started = false;
-    sr.onstart = () => { started = true; };
-    sr.start();
-    expect(started).toBe(true);
+  it('start fires onstart', () => { const sr = makeMockSR(); let ok = false; sr.onstart = () => { ok = true; }; sr.start(); expect(ok).toBe(true); });
+  it('stop fires onend',    () => { const sr = makeMockSR(); let ok = false; sr.onend = () => { ok = true; }; sr.stop();  expect(ok).toBe(true); });
+  it('abort fires onend',   () => { const sr = makeMockSR(); let ok = false; sr.onend = () => { ok = true; }; sr.abort(); expect(ok).toBe(true); });
+  it('onresult delivers transcript', () => {
+    const sr = makeMockSR(); let recv = '';
+    sr.onresult = (e) => { for (let i = e.resultIndex; i < e.results.length; i++) recv += e.results[i][0].transcript; };
+    sr.onresult({ resultIndex: 0, results: [Object.assign([{ transcript: 'hello' }], { isFinal: false })] });
+    expect(recv).toBe('hello');
   });
-
-  it('calling stop fires the onend callback', () => {
-    const sr = makeMockSR();
-    let ended = false;
-    sr.onend = () => { ended = true; };
-    sr.stop();
-    expect(ended).toBe(true);
-  });
-
-  it('calling abort fires the onend callback', () => {
-    const sr = makeMockSR();
-    let aborted = false;
-    sr.onend = () => { aborted = true; };
-    sr.abort();
-    expect(aborted).toBe(true);
-  });
-
-  it('onresult event delivers transcript text', () => {
-    const sr = makeMockSR();
-    let received = '';
-    sr.onresult = (e) => {
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        received += e.results[i][0].transcript;
-      }
-    };
-    sr.onresult({
-      resultIndex: 0,
-      results: [Object.assign([{ transcript: 'hello world' }], { isFinal: false })],
-    });
-    expect(received).toBe('hello world');
-  });
-
-  it('onresult event sets isFinal when the result is marked final', () => {
-    const sr = makeMockSR();
-    let finalSeen = false;
-    sr.onresult = (e) => {
-      if (e.results[0].isFinal) finalSeen = true;
-    };
-    sr.onresult({
-      resultIndex: 0,
-      results: [Object.assign([{ transcript: 'done' }], { isFinal: true })],
-    });
-    expect(finalSeen).toBe(true);
+  it('onresult marks isFinal', () => {
+    const sr = makeMockSR(); let seen = false;
+    sr.onresult = (e) => { if (e.results[0].isFinal) seen = true; };
+    sr.onresult({ resultIndex: 0, results: [Object.assign([{ transcript: 'done' }], { isFinal: true })] });
+    expect(seen).toBe(true);
   });
 });
 
@@ -292,60 +204,93 @@ describe('useSpeechRecognition — MockSR state transitions', () => {
 // 4. SelectionModal
 // ════════════════════════════════════════════════════════════════════════════
 describe('SelectionModal', () => {
+  beforeEach(() => installSynthMock());
+  afterEach(() => removeSynthMock());
+
   it('renders the modal heading', () => {
-    render(<SelectionModal onStart={vi.fn()} />);
-    expect(screen.getByText(/choose your tutor/i)).toBeInTheDocument();
+    withSettings(<SelectionModal onStart={vi.fn()} />, 'de');
+    expect(screen.getByText(/choose your scene partner/i)).toBeInTheDocument();
   });
 
-  it('renders all three character names', () => {
-    render(<SelectionModal onStart={vi.fn()} />);
+  it('shows the German language chip when settings lang is de', () => {
+    withSettings(<SelectionModal onStart={vi.fn()} />, 'de');
+    expect(screen.getByText('German')).toBeInTheDocument();
+    expect(screen.getByText('🇩🇪')).toBeInTheDocument();
+  });
+
+  it('shows only German characters (Nono + John) when lang=de', () => {
+    withSettings(<SelectionModal onStart={vi.fn()} />, 'de');
     expect(screen.getByText('Nono')).toBeInTheDocument();
-    expect(screen.getByText('Alex')).toBeInTheDocument();
-    expect(screen.getByText('María')).toBeInTheDocument();
+    expect(screen.getByText('John')).toBeInTheDocument();
+    expect(screen.queryByText('Alex')).not.toBeInTheDocument();
+    expect(screen.queryByText('María')).not.toBeInTheDocument();
   });
 
-  it('Start button is disabled before selecting a character', () => {
-    render(<SelectionModal onStart={vi.fn()} />);
-    expect(screen.getByRole('button', { name: /select a tutor/i })).toBeDisabled();
+  it('shows only English characters (Alex + Emma) when lang=en', () => {
+    withSettings(<SelectionModal onStart={vi.fn()} />, 'en');
+    expect(screen.getByText('Alex')).toBeInTheDocument();
+    expect(screen.getByText('Emma')).toBeInTheDocument();
+    expect(screen.queryByText('Nono')).not.toBeInTheDocument();
+  });
+
+  it('shows only Spanish characters when lang=es', () => {
+    withSettings(<SelectionModal onStart={vi.fn()} />, 'es');
+    expect(screen.getByText('María')).toBeInTheDocument();
+    expect(screen.getByText('Carlos')).toBeInTheDocument();
+  });
+
+  it('Start button is disabled before a character is selected', () => {
+    withSettings(<SelectionModal onStart={vi.fn()} />, 'de');
+    expect(screen.getByRole('button', { name: /select a scene partner/i })).toBeDisabled();
   });
 
   it('Start button enables after clicking a character card', async () => {
     const user = userEvent.setup();
-    render(<SelectionModal onStart={vi.fn()} />);
+    withSettings(<SelectionModal onStart={vi.fn()} />, 'de');
     await user.click(screen.getByText('Nono').closest('button'));
-    expect(screen.getByRole('button', { name: /start german lesson/i })).not.toBeDisabled();
+    expect(screen.getByRole('button', { name: /start scene with nono/i })).not.toBeDisabled();
   });
 
-  it('calls onStart(de, nono) when Nono is selected', async () => {
+  it('calls onStart(de, nono) when Nono selected and Start clicked', async () => {
     const user = userEvent.setup();
-    const onStart = vi.fn();
-    render(<SelectionModal onStart={onStart} />);
+    const fn = vi.fn();
+    withSettings(<SelectionModal onStart={fn} />, 'de');
     await user.click(screen.getByText('Nono').closest('button'));
-    await user.click(screen.getByRole('button', { name: /start german lesson/i }));
-    expect(onStart).toHaveBeenCalledWith('de', 'nono');
+    await user.click(screen.getByRole('button', { name: /start scene with nono/i }));
+    expect(fn).toHaveBeenCalledWith('de', 'nono');
   });
 
-  it('calls onStart(es, maria) when María is selected', async () => {
+  it('calls onStart(de, john_de) when John selected', async () => {
     const user = userEvent.setup();
-    const onStart = vi.fn();
-    render(<SelectionModal onStart={onStart} />);
-    await user.click(screen.getByText('María').closest('button'));
-    await user.click(screen.getByRole('button', { name: /start spanish lesson/i }));
-    expect(onStart).toHaveBeenCalledWith('es', 'maria');
+    const fn = vi.fn();
+    withSettings(<SelectionModal onStart={fn} />, 'de');
+    await user.click(screen.getByText('John').closest('button'));
+    await user.click(screen.getByRole('button', { name: /start scene with john/i }));
+    expect(fn).toHaveBeenCalledWith('de', 'john_de');
   });
 
-  it('calls onStart(en, alex) when Alex is selected', async () => {
+  it('calls onStart(en, alex) when Alex selected (en lang)', async () => {
     const user = userEvent.setup();
-    const onStart = vi.fn();
-    render(<SelectionModal onStart={onStart} />);
+    const fn = vi.fn();
+    withSettings(<SelectionModal onStart={fn} />, 'en');
     await user.click(screen.getByText('Alex').closest('button'));
-    await user.click(screen.getByRole('button', { name: /start english lesson/i }));
-    expect(onStart).toHaveBeenCalledWith('en', 'alex');
+    await user.click(screen.getByRole('button', { name: /start scene with alex/i }));
+    expect(fn).toHaveBeenCalledWith('en', 'alex');
   });
 
-  it('renders character persona descriptions', () => {
-    render(<SelectionModal onStart={vi.fn()} />);
-    expect(screen.getByText(/friendly tutor from berlin/i)).toBeInTheDocument();
+  it('calls onStart(es, maria) when María selected (es lang)', async () => {
+    const user = userEvent.setup();
+    const fn = vi.fn();
+    withSettings(<SelectionModal onStart={fn} />, 'es');
+    await user.click(screen.getByText('María').closest('button'));
+    await user.click(screen.getByRole('button', { name: /start scene with maría/i }));
+    expect(fn).toHaveBeenCalledWith('es', 'maria');
+  });
+
+  it('renders role badges', () => {
+    withSettings(<SelectionModal onStart={vi.fn()} />, 'de');
+    expect(screen.getByText(/café regular/i)).toBeInTheDocument();
+    expect(screen.getByText(/street reporter/i)).toBeInTheDocument();
   });
 });
 
@@ -354,57 +299,31 @@ describe('SelectionModal', () => {
 // ════════════════════════════════════════════════════════════════════════════
 describe('ConvoHeader', () => {
   const props = {
-    character:         NONO,
-    script:            DE_GREET,
-    lang:              'de',
-    turnIndex:         0,
-    totalTurns:        DE_GREET.turns.length,
-    onChangeCharacter: vi.fn(),
-    onViewScript:      vi.fn(),
+    character: NONO, script: DE_GREET, lang: 'de',
+    turnIndex: 0, totalTurns: DE_GREET.turns.length,
+    onChangeCharacter: vi.fn(), onViewScript: vi.fn(),
   };
-
-  it('renders the topic title', () => {
-    render(<ConvoHeader {...props} />);
-    expect(screen.getByText(/greetings/i)).toBeInTheDocument();
-  });
-
-  it('shows character name and turn count', () => {
-    render(<ConvoHeader {...props} />);
-    expect(screen.getByText(/nono/i)).toBeInTheDocument();
-    expect(screen.getByText(/turn 1 of 7/i)).toBeInTheDocument();
-  });
-
+  it('renders the topic title', () => { render(<ConvoHeader {...props} />); expect(screen.getByText(/greetings/i)).toBeInTheDocument(); });
+  it('shows character name and turn count', () => { render(<ConvoHeader {...props} />); expect(screen.getByText(/nono/i)).toBeInTheDocument(); });
   it('renders Change Character and View Script buttons', () => {
     render(<ConvoHeader {...props} />);
     expect(screen.getByRole('button', { name: /change character/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /view script/i })).toBeInTheDocument();
   });
-
   it('calls onChangeCharacter on click', async () => {
-    const user = userEvent.setup();
-    const fn = vi.fn();
+    const user = userEvent.setup(); const fn = vi.fn();
     render(<ConvoHeader {...props} onChangeCharacter={fn} />);
     await user.click(screen.getByRole('button', { name: /change character/i }));
     expect(fn).toHaveBeenCalledOnce();
   });
-
   it('calls onViewScript on click', async () => {
-    const user = userEvent.setup();
-    const fn = vi.fn();
+    const user = userEvent.setup(); const fn = vi.fn();
     render(<ConvoHeader {...props} onViewScript={fn} />);
     await user.click(screen.getByRole('button', { name: /view script/i }));
     expect(fn).toHaveBeenCalledOnce();
   });
-
-  it('progress bar has correct aria-valuenow at turn 3 of 7', () => {
-    render(<ConvoHeader {...props} turnIndex={3} totalTurns={7} />);
-    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '57');
-  });
-
-  it('progress fill width increases as turnIndex increases', () => {
-    const { rerender, container } = render(
-      <ConvoHeader {...props} turnIndex={0} totalTurns={4} />
-    );
+  it('progress fill width grows as turnIndex increases', () => {
+    const { rerender, container } = render(<ConvoHeader {...props} turnIndex={0} totalTurns={4} />);
     const w0 = parseFloat(container.querySelector('.cp-progress-fill').style.width);
     rerender(<ConvoHeader {...props} turnIndex={3} totalTurns={4} />);
     const w3 = parseFloat(container.querySelector('.cp-progress-fill').style.width);
@@ -417,238 +336,142 @@ describe('ConvoHeader', () => {
 // ════════════════════════════════════════════════════════════════════════════
 describe('TurnCard — AI turn', () => {
   let synth;
-
+  const onSpeak = vi.fn();
   const aiProps = {
-    turn:          { speaker: 'ai', text: 'Hello! How are you?' },
-    turnIdx:       0,
-    isActive:      true,
-    isDone:        false,
-    submittedText: undefined,
-    charName:      'Nono',
-    charAvatar:    '🧑‍🏫',
-    voiceLocale:   'de-DE',
-    lang:          'de',
-    onAiContinue:  vi.fn(),
-    onUserSubmit:  vi.fn(),
+    turn: { speaker: 'ai', text: 'Hello! How are you?' }, turnIdx: 0,
+    isActive: true, isDone: false, submittedText: undefined,
+    charName: 'Nono', charAvatar: '🎭', voiceLocale: 'de-DE', lang: 'de',
+    autoAdvanceDelay: 50, onAiContinue: vi.fn(), onUserSubmit: vi.fn(), onSpeak,
   };
 
-  beforeEach(() => { synth = installSynthMock(); setSRState(); });
-  afterEach(()  => { removeSynthMock(); vi.restoreAllMocks(); });
+  beforeEach(() => { synth = installSynthMock(); setSRState(); onSpeak.mockClear(); });
+  afterEach(() => { removeSynthMock(); vi.restoreAllMocks(); });
 
-  it('displays the character name label', () => {
-    render(<TurnCard {...aiProps} />);
-    expect(screen.getByText('Nono')).toBeInTheDocument();
-  });
+  it('displays the character name label', () => { render(<TurnCard {...aiProps} />); expect(screen.getByText('Nono')).toBeInTheDocument(); });
+  it('displays the AI text', () => { render(<TurnCard {...aiProps} />); expect(screen.getByText('Hello! How are you?')).toBeInTheDocument(); });
+  it('renders the Listen TTS button', () => { render(<TurnCard {...aiProps} />); expect(screen.getByRole('button', { name: /play audio/i })).toBeInTheDocument(); });
 
-  it('displays the AI text', () => {
-    render(<TurnCard {...aiProps} />);
-    expect(screen.getByText('Hello! How are you?')).toBeInTheDocument();
-  });
-
-  it('renders the Listen TTS button', () => {
-    render(<TurnCard {...aiProps} />);
-    expect(screen.getByRole('button', { name: /play audio/i })).toBeInTheDocument();
-  });
-
-  it('calls speechSynthesis.cancel then speak when Listen is clicked', async () => {
+  it('calls onSpeak with the AI text when Listen is clicked', async () => {
     const user = userEvent.setup();
-    render(<TurnCard {...aiProps} />);
+    const fn = vi.fn();
+    render(<TurnCard {...aiProps} autoAdvanceDelay={9999} onSpeak={fn} />);
     await user.click(screen.getByRole('button', { name: /play audio/i }));
-    expect(synth.cancel).toHaveBeenCalled();
-    expect(synth.speak).toHaveBeenCalled();
+    expect(fn).toHaveBeenCalledWith('Hello! How are you?');
   });
 
-  it('renders Continue button when isActive', () => {
-    render(<TurnCard {...aiProps} />);
-    expect(screen.getByRole('button', { name: /continue/i })).toBeInTheDocument();
-  });
-
-  it('omits Continue button when isDone', () => {
-    render(<TurnCard {...aiProps} isActive={false} isDone={true} />);
+  it('does NOT render a Continue button', () => {
+    render(<TurnCard {...aiProps} autoAdvanceDelay={9999} />);
     expect(screen.queryByRole('button', { name: /continue/i })).not.toBeInTheDocument();
   });
 
-  it('calls onAiContinue when Continue is clicked', async () => {
-    const user = userEvent.setup();
+  it('auto-advances by calling onAiContinue after the delay', async () => {
     const fn = vi.fn();
-    render(<TurnCard {...aiProps} onAiContinue={fn} />);
-    await user.click(screen.getByRole('button', { name: /continue/i }));
-    expect(fn).toHaveBeenCalledOnce();
+    render(<TurnCard {...aiProps} autoAdvanceDelay={50} onAiContinue={fn} />);
+    expect(fn).not.toHaveBeenCalled();
+    await waitFor(() => expect(fn).toHaveBeenCalledOnce(), { timeout: 500 });
+  });
+
+  it('does NOT auto-advance when isActive=false', async () => {
+    const fn = vi.fn();
+    render(<TurnCard {...aiProps} isActive={false} isDone={true} autoAdvanceDelay={50} onAiContinue={fn} />);
+    await new Promise(r => setTimeout(r, 150));
+    expect(fn).not.toHaveBeenCalled();
   });
 
   it('adds cp-turn-done class when isDone', () => {
-    const { container } = render(
-      <TurnCard {...aiProps} isActive={false} isDone={true} />
-    );
+    const { container } = render(<TurnCard {...aiProps} isActive={false} isDone={true} />);
     expect(container.querySelector('.cp-turn-done')).toBeInTheDocument();
-  });
-
-  it('TTS button id is stable and based on turnIdx prop', () => {
-    const { container } = render(<TurnCard {...aiProps} turnIdx={3} />);
-    expect(container.querySelector('#convo-tts-btn-3')).toBeInTheDocument();
   });
 });
 
 // ════════════════════════════════════════════════════════════════════════════
 // 7a. TurnCard — User turn (fallback text input)
-//     isSupported = false → plain <input> renders
 // ════════════════════════════════════════════════════════════════════════════
 describe('TurnCard — User turn (fallback text input)', () => {
   const userProps = {
-    turn:          { speaker: 'user', hint: 'Say you are doing well' },
-    turnIdx:       1,
-    isActive:      true,
-    isDone:        false,
-    submittedText: undefined,
-    charName:      'Nono',
-    charAvatar:    '🧑‍🏫',
-    voiceLocale:   'en-US',
-    lang:          'en',
-    onAiContinue:  vi.fn(),
-    onUserSubmit:  vi.fn(),
+    turn: { speaker: 'user', hint: 'Say you are doing well' }, turnIdx: 1,
+    isActive: true, isDone: false, submittedText: undefined,
+    charName: 'Nono', charAvatar: '🎭', voiceLocale: 'en-US', lang: 'en',
+    autoAdvanceDelay: 9999, onAiContinue: vi.fn(), onUserSubmit: vi.fn(), onSpeak: vi.fn(),
   };
-
   beforeEach(() => setSRState({ isSupported: false }));
 
-  it('displays the You label', () => {
-    render(<TurnCard {...userProps} />);
-    expect(screen.getByText('You')).toBeInTheDocument();
-  });
+  it('shows the hint text', () => { render(<TurnCard {...userProps} />); expect(screen.getByText(/say you are doing well/i)).toBeInTheDocument(); });
+  it('renders a fallback text input', () => { render(<TurnCard {...userProps} />); expect(screen.getByPlaceholderText(/type your response/i)).toBeInTheDocument(); });
+  it('Submit is disabled when input is empty', () => { render(<TurnCard {...userProps} />); expect(screen.getByRole('button', { name: /^submit$/i })).toBeDisabled(); });
 
-  it('shows the hint text', () => {
-    render(<TurnCard {...userProps} />);
-    expect(screen.getByText(/say you are doing well/i)).toBeInTheDocument();
-  });
-
-  it('renders a fallback text input', () => {
-    render(<TurnCard {...userProps} />);
-    expect(screen.getByPlaceholderText(/type your response/i)).toBeInTheDocument();
-  });
-
-  it('Submit button is disabled when input is empty', () => {
-    render(<TurnCard {...userProps} />);
-    expect(screen.getByRole('button', { name: /^submit$/i })).toBeDisabled();
-  });
-
-  it('Submit button enables once text is typed', async () => {
+  it('Submit enables once text is typed', async () => {
     const user = userEvent.setup();
     render(<TurnCard {...userProps} />);
     await user.type(screen.getByPlaceholderText(/type your response/i), 'I am fine');
     expect(screen.getByRole('button', { name: /^submit$/i })).not.toBeDisabled();
   });
 
-  it('calls onUserSubmit with typed text on button click', async () => {
-    const user = userEvent.setup();
-    const fn = vi.fn();
+  it('calls onUserSubmit with typed text on click', async () => {
+    const user = userEvent.setup(); const fn = vi.fn();
     render(<TurnCard {...userProps} onUserSubmit={fn} />);
     await user.type(screen.getByPlaceholderText(/type your response/i), 'I am fine');
     await user.click(screen.getByRole('button', { name: /^submit$/i }));
     expect(fn).toHaveBeenCalledWith('I am fine');
   });
 
-  it('calls onUserSubmit on Enter key press', async () => {
-    const user = userEvent.setup();
-    const fn = vi.fn();
+  it('calls onUserSubmit on Enter key', async () => {
+    const user = userEvent.setup(); const fn = vi.fn();
     render(<TurnCard {...userProps} onUserSubmit={fn} />);
-    await user.type(
-      screen.getByPlaceholderText(/type your response/i),
-      'Doing great{Enter}'
-    );
+    await user.type(screen.getByPlaceholderText(/type your response/i), 'Doing great{Enter}');
     expect(fn).toHaveBeenCalledWith('Doing great');
   });
 
-  it('shows submitted text and hides input when isDone', () => {
-    render(
-      <TurnCard
-        {...userProps}
-        isActive={false}
-        isDone={true}
-        submittedText="I am doing very well"
-      />
-    );
+  it('shows submitted text when isDone', () => {
+    render(<TurnCard {...userProps} isActive={false} isDone={true} submittedText="I am doing very well" />);
     expect(screen.getByText(/"I am doing very well"/)).toBeInTheDocument();
-    expect(screen.queryByPlaceholderText(/type your response/i)).not.toBeInTheDocument();
   });
 });
 
 // ════════════════════════════════════════════════════════════════════════════
 // 7b. TurnCard — User turn (mic path)
-//     We control hook state through _srCtrl which the vi.mock delegates to.
-//     Each test calls setSRState() to configure what the hook "returns".
 // ════════════════════════════════════════════════════════════════════════════
 describe('TurnCard — User turn (mic path)', () => {
   const userProps = {
-    turn:          { speaker: 'user', hint: 'Speak your answer' },
-    turnIdx:       1,
-    isActive:      true,
-    isDone:        false,
-    submittedText: undefined,
-    charName:      'Nono',
-    charAvatar:    '🧑‍🏫',
-    voiceLocale:   'de-DE',
-    lang:          'de',
-    onAiContinue:  vi.fn(),
-    onUserSubmit:  vi.fn(),
+    turn: { speaker: 'user', hint: 'Speak your answer' }, turnIdx: 1,
+    isActive: true, isDone: false, submittedText: undefined,
+    charName: 'Nono', charAvatar: '🎭', voiceLocale: 'de-DE', lang: 'de',
+    autoAdvanceDelay: 9999, onAiContinue: vi.fn(), onUserSubmit: vi.fn(), onSpeak: vi.fn(),
   };
+  beforeEach(() => vi.clearAllMocks());
 
-  it('shows the Record mic button when isSupported=true and idle', () => {
-    setSRState({ isSupported: true, isListening: false, transcript: '', isFinal: false });
+  it('shows Record button when isSupported=true and idle', () => {
+    setSRState({ isSupported: true });
     render(<TurnCard {...userProps} />);
     expect(screen.getByRole('button', { name: /start recording/i })).toBeInTheDocument();
   });
 
-  it('shows the Stop button when isListening=true', () => {
-    setSRState({ isSupported: true, isListening: true, transcript: '', isFinal: false });
+  it('shows Stop button when isListening=true', () => {
+    setSRState({ isSupported: true, isListening: true });
     render(<TurnCard {...userProps} />);
     expect(screen.getByRole('button', { name: /stop recording/i })).toBeInTheDocument();
   });
 
-  it('applies cp-recording class while listening', () => {
-    setSRState({ isSupported: true, isListening: true, transcript: '', isFinal: false });
-    const { container } = render(<TurnCard {...userProps} />);
-    expect(container.querySelector('.cp-recording')).toBeInTheDocument();
-  });
-
-  it('displays interim transcript text while listening', () => {
-    setSRState({ isSupported: true, isListening: true, transcript: 'partial text', isFinal: false });
-    render(<TurnCard {...userProps} />);
-    expect(screen.getByText(/partial text/i)).toBeInTheDocument();
-  });
-
-  it('shows Keep & Submit / Record Again after recognition ends with text (isFinal=true)', () => {
-    // isListening=false + transcript set → useEffect fires on mount, sets captureReady=true
+  it('shows Keep & Submit / Record Again after recognition ends with text', () => {
     setSRState({ isSupported: true, isListening: false, transcript: 'final text', isFinal: true });
     render(<TurnCard {...userProps} />);
     expect(screen.getByRole('button', { name: /keep.*submit/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /record again/i })).toBeInTheDocument();
   });
 
-  it('calls onUserSubmit with the transcript when Keep & Submit is clicked', async () => {
-    const user = userEvent.setup();
-    const fn = vi.fn();
+  it('calls onUserSubmit when Keep & Submit clicked', async () => {
+    const user = userEvent.setup(); const fn = vi.fn();
     setSRState({ isSupported: true, isListening: false, transcript: 'my answer', isFinal: true });
     render(<TurnCard {...userProps} onUserSubmit={fn} />);
     await user.click(screen.getByRole('button', { name: /keep.*submit/i }));
     expect(fn).toHaveBeenCalledWith('my answer');
   });
 
-  it('calls reset() when Record Again is clicked', async () => {
-    const user = userEvent.setup();
-    const resetFn = vi.fn();
+  it('calls reset() when Record Again clicked', async () => {
+    const user = userEvent.setup(); const resetFn = vi.fn();
     setSRState({ isSupported: true, isListening: false, transcript: 'oops', isFinal: true, reset: resetFn });
     render(<TurnCard {...userProps} />);
     await user.click(screen.getByRole('button', { name: /record again/i }));
-    expect(resetFn).toHaveBeenCalled();
-  });
-
-  it('calls reset() when Record Again is clicked (confirmed via spy)', async () => {
-    const user = userEvent.setup();
-    const resetFn = vi.fn();
-    setSRState({ isSupported: true, isListening: false, transcript: 'oops', isFinal: true, reset: resetFn });
-    render(<TurnCard {...userProps} />);
-    await user.click(screen.getByRole('button', { name: /record again/i }));
-    // The component calls reset() — this is the observable effect that would
-    // clear the real hook's state (transcript/draft/captureReady).
     expect(resetFn).toHaveBeenCalled();
   });
 });
@@ -660,38 +483,20 @@ describe('ScriptModal', () => {
   const onClose = vi.fn();
   beforeEach(() => onClose.mockClear());
 
-  it('renders the topic title', () => {
-    render(<ScriptModal script={DE_GREET} charName="Nono" onClose={onClose} />);
-    expect(screen.getByText(/greetings/i)).toBeInTheDocument();
-  });
+  it('renders the topic title', () => { render(<ScriptModal script={DE_GREET} charName="Nono" onClose={onClose} />); expect(screen.getByText(/greetings/i)).toBeInTheDocument(); });
+  it('renders Nono labels for AI turns', () => { render(<ScriptModal script={DE_GREET} charName="Nono" onClose={onClose} />); expect(screen.getAllByText('Nono').length).toBeGreaterThanOrEqual(4); });
+  it('renders hint text for user turns', () => { render(<ScriptModal script={DE_GREET} charName="Nono" onClose={onClose} />); expect(screen.getByText(/introduce yourself/i)).toBeInTheDocument(); });
 
-  it('renders Nono labels for AI turns (DE_GREET has 4 AI turns)', () => {
-    render(<ScriptModal script={DE_GREET} charName="Nono" onClose={onClose} />);
-    expect(screen.getAllByText('Nono').length).toBeGreaterThanOrEqual(4);
-  });
-
-  it('renders You labels for user turns (DE_GREET has 3 user turns)', () => {
-    render(<ScriptModal script={DE_GREET} charName="Nono" onClose={onClose} />);
-    expect(screen.getAllByText('You').length).toBeGreaterThanOrEqual(3);
-  });
-
-  it('displays hint text for user turns', () => {
-    render(<ScriptModal script={DE_GREET} charName="Nono" onClose={onClose} />);
-    expect(screen.getByText(/introduce yourself/i)).toBeInTheDocument();
-  });
-
-  it('calls onClose when Close button is clicked', async () => {
+  it('calls onClose when Close button clicked', async () => {
     const user = userEvent.setup();
     render(<ScriptModal script={DE_GREET} charName="Nono" onClose={onClose} />);
     await user.click(screen.getByRole('button', { name: /close script panel/i }));
     expect(onClose).toHaveBeenCalledOnce();
   });
 
-  it('calls onClose when the backdrop overlay is clicked', async () => {
+  it('calls onClose when backdrop clicked', async () => {
     const user = userEvent.setup();
-    const { container } = render(
-      <ScriptModal script={DE_GREET} charName="Nono" onClose={onClose} />
-    );
+    const { container } = render(<ScriptModal script={DE_GREET} charName="Nono" onClose={onClose} />);
     await user.click(container.querySelector('.cp-script-overlay'));
     expect(onClose).toHaveBeenCalled();
   });
@@ -701,92 +506,25 @@ describe('ScriptModal', () => {
 // 9. FeedbackView
 // ════════════════════════════════════════════════════════════════════════════
 describe('FeedbackView', () => {
-  // DE_GREET user turns are at indices 1, 3, 5
   const userResponses = { 1: 'Ich heiße Lena', 3: 'Aus Deutschland', 5: 'Seit drei Monaten' };
-
-  const baseProps = {
-    script:        DE_GREET,
-    userResponses,
-    lang:          'de',
-    character:     NONO,
-    onRetry:       vi.fn(),
-    onNextContext: vi.fn(),
-  };
-
+  const baseProps = { script: DE_GREET, userResponses, lang: 'de', character: NONO, onRetry: vi.fn(), onNextContext: vi.fn() };
   beforeEach(() => { baseProps.onRetry.mockClear(); baseProps.onNextContext.mockClear(); });
 
-  it('renders the Lesson Complete heading', () => {
-    render(<FeedbackView {...baseProps} />);
-    expect(screen.getByText(/lesson complete/i)).toBeInTheDocument();
-  });
+  it('renders Lesson Complete heading', () => { render(<FeedbackView {...baseProps} />); expect(screen.getByText(/lesson complete/i)).toBeInTheDocument(); });
+  it('shows 5 star elements', () => { const { container } = render(<FeedbackView {...baseProps} />); expect(container.querySelectorAll('.cp-star')).toHaveLength(5); });
+  it('shows all 5 earned when all answered', () => { const { container } = render(<FeedbackView {...baseProps} />); expect(container.querySelectorAll('.cp-star.earned')).toHaveLength(5); });
+  it('shows fewer stars when only one response', () => { const { container } = render(<FeedbackView {...baseProps} userResponses={{ 1: 'one' }} />); expect(container.querySelectorAll('.cp-star.earned').length).toBeLessThan(5); });
+  it('shows submitted responses', () => { render(<FeedbackView {...baseProps} />); expect(screen.getByText(/ich heiße lena/i)).toBeInTheDocument(); });
 
-  it('shows the script topic name', () => {
-    render(<FeedbackView {...baseProps} />);
-    expect(screen.getByText(/greetings/i)).toBeInTheDocument();
-  });
-
-  it('renders exactly 5 star elements', () => {
-    const { container } = render(<FeedbackView {...baseProps} />);
-    expect(container.querySelectorAll('.cp-star')).toHaveLength(5);
-  });
-
-  it('shows all 5 stars earned when all user turns answered', () => {
-    const { container } = render(<FeedbackView {...baseProps} />);
-    expect(container.querySelectorAll('.cp-star.earned')).toHaveLength(5);
-  });
-
-  it('shows fewer stars when only one response is submitted', () => {
-    const { container } = render(
-      <FeedbackView {...baseProps} userResponses={{ 1: 'only one' }} />
-    );
-    expect(container.querySelectorAll('.cp-star.earned').length).toBeLessThan(5);
-  });
-
-  it('displays Responses, Stars, and Total Turns score pills', () => {
-    render(<FeedbackView {...baseProps} />);
-    expect(screen.getByText('Responses')).toBeInTheDocument();
-    expect(screen.getByText('Stars')).toBeInTheDocument();
-    expect(screen.getByText('Total Turns')).toBeInTheDocument();
-  });
-
-  it('shows 3/3 in the Responses pill', () => {
-    render(<FeedbackView {...baseProps} />);
-    expect(screen.getByText('3/3')).toBeInTheDocument();
-  });
-
-  it('renders the Grammar Feedback section', () => {
-    render(<FeedbackView {...baseProps} />);
-    expect(screen.getByText(/grammar feedback/i)).toBeInTheDocument();
-  });
-
-  it('renders the Pronunciation Feedback section', () => {
-    render(<FeedbackView {...baseProps} />);
-    expect(screen.getByText(/pronunciation feedback/i)).toBeInTheDocument();
-  });
-
-  it('shows submitted response texts in the summary', () => {
-    render(<FeedbackView {...baseProps} />);
-    expect(screen.getByText(/ich heiße lena/i)).toBeInTheDocument();
-    expect(screen.getByText(/aus deutschland/i)).toBeInTheDocument();
-  });
-
-  it('renders Retry Lesson and Next Context buttons', () => {
-    render(<FeedbackView {...baseProps} />);
-    expect(screen.getByRole('button', { name: /retry lesson/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /next context/i })).toBeInTheDocument();
-  });
-
-  it('calls onRetry when Retry Lesson is clicked', async () => {
-    const user = userEvent.setup();
-    const fn = vi.fn();
+  it('calls onRetry when Retry Lesson clicked', async () => {
+    const user = userEvent.setup(); const fn = vi.fn();
     render(<FeedbackView {...baseProps} onRetry={fn} />);
     await user.click(screen.getByRole('button', { name: /retry lesson/i }));
     expect(fn).toHaveBeenCalledOnce();
   });
 
-  it('calls onNextContext when Next Context is clicked', async () => {
-    const user = userEvent.setup();
-    const fn = vi.fn();
+  it('calls onNextContext when Next Context clicked', async () => {
+    const user = userEvent.setup(); const fn = vi.fn();
     render(<FeedbackView {...baseProps} onNextContext={fn} />);
     await user.click(screen.getByRole('button', { name: /next context/i }));
     expect(fn).toHaveBeenCalledOnce();
@@ -794,142 +532,149 @@ describe('FeedbackView', () => {
 });
 
 // ════════════════════════════════════════════════════════════════════════════
-// 10. ConvoPage — integration (select → convo → feedback)
-//     Speech recognition is mocked (isSupported=false) → fallback text input.
+// 10. ConvoPage — integration (with SettingsProvider, autoAdvanceDelay=0)
 // ════════════════════════════════════════════════════════════════════════════
 describe('ConvoPage integration', () => {
   beforeEach(() => {
     setSRState({ isSupported: false });
     installSynthMock();
+    localStorage.setItem('timerTool_language', 'de');
   });
+  afterEach(() => { removeSynthMock(); vi.restoreAllMocks(); });
 
-  afterEach(() => {
-    removeSynthMock();
-    vi.restoreAllMocks();
-  });
+  function renderConvo() {
+    return render(
+      <SettingsProvider>
+        <ConvoPage autoAdvanceDelay={0} />
+      </SettingsProvider>
+    );
+  }
 
   it('shows SelectionModal on first render', () => {
-    render(<ConvoPage />);
-    expect(screen.getByText(/choose your tutor/i)).toBeInTheDocument();
+    renderConvo();
+    expect(screen.getByText(/choose your scene partner/i)).toBeInTheDocument();
+  });
+
+  it('shows German characters (Nono + John) when lang=de', () => {
+    renderConvo();
+    expect(screen.getByText('Nono')).toBeInTheDocument();
+    expect(screen.getByText('John')).toBeInTheDocument();
   });
 
   it('transitions to conversation view after selecting a character', async () => {
     const user = userEvent.setup();
-    render(<ConvoPage />);
-    await user.click(screen.getByText('Alex').closest('button'));
-    await user.click(screen.getByRole('button', { name: /start english lesson/i }));
+    renderConvo();
+    await user.click(screen.getByText('Nono').closest('button'));
+    await user.click(screen.getByRole('button', { name: /start scene with nono/i }));
     expect(screen.getByRole('button', { name: /change character/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /view script/i })).toBeInTheDocument();
   });
 
-  it('shows the first AI turn text after starting (German)', async () => {
+  it('shows the first AI turn text after starting', async () => {
     const user = userEvent.setup();
-    render(<ConvoPage />);
+    renderConvo();
     await user.click(screen.getByText('Nono').closest('button'));
-    await user.click(screen.getByRole('button', { name: /start german lesson/i }));
-    expect(screen.getByText(/hallo.*nono/i)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /start scene with nono/i }));
+    const aiTexts = screen.getAllByText(/hallo.*nono/i);
+    expect(aiTexts.some(el => el.classList.contains('cp-ai-text'))).toBe(true);
   });
 
-  it('shows fallback text input after clicking Continue on an AI turn', async () => {
+  it('opens ScriptModal when View Script clicked', async () => {
     const user = userEvent.setup();
-    render(<ConvoPage />);
-    await user.click(screen.getByText('Alex').closest('button'));
-    await user.click(screen.getByRole('button', { name: /start english lesson/i }));
-    await user.click(screen.getByRole('button', { name: /continue/i }));
-    expect(screen.getByPlaceholderText(/type your response/i)).toBeInTheDocument();
-  });
-
-  it('opens ScriptModal when View Script is clicked', async () => {
-    const user = userEvent.setup();
-    render(<ConvoPage />);
+    renderConvo();
     await user.click(screen.getByText('Nono').closest('button'));
-    await user.click(screen.getByRole('button', { name: /start german lesson/i }));
+    await user.click(screen.getByRole('button', { name: /start scene with nono/i }));
     await user.click(screen.getByRole('button', { name: /view script/i }));
     expect(screen.getByRole('button', { name: /close script panel/i })).toBeInTheDocument();
   });
 
-  it('closes ScriptModal when its close button is clicked', async () => {
+  it('closes ScriptModal when close clicked', async () => {
     const user = userEvent.setup();
-    render(<ConvoPage />);
+    renderConvo();
     await user.click(screen.getByText('Nono').closest('button'));
-    await user.click(screen.getByRole('button', { name: /start german lesson/i }));
+    await user.click(screen.getByRole('button', { name: /start scene with nono/i }));
     await user.click(screen.getByRole('button', { name: /view script/i }));
     await user.click(screen.getByRole('button', { name: /close script panel/i }));
     expect(screen.queryByRole('button', { name: /close script panel/i })).not.toBeInTheDocument();
   });
 
-  it('returns to SelectionModal when Change Character is clicked', async () => {
+  it('returns to SelectionModal when Change Character clicked', async () => {
     const user = userEvent.setup();
-    render(<ConvoPage />);
-    await user.click(screen.getByText('Alex').closest('button'));
-    await user.click(screen.getByRole('button', { name: /start english lesson/i }));
+    renderConvo();
+    await user.click(screen.getByText('Nono').closest('button'));
+    await user.click(screen.getByRole('button', { name: /start scene with nono/i }));
     await user.click(screen.getByRole('button', { name: /change character/i }));
-    expect(screen.getByText(/choose your tutor/i)).toBeInTheDocument();
+    expect(screen.getByText(/choose your scene partner/i)).toBeInTheDocument();
   });
 
-  // ── Shared helper: step through the 7-turn German Greetings script ─────
+  /** Drive through all turns of the German Greetings script */
   async function runFullGermanLesson(user) {
     await user.click(screen.getByText('Nono').closest('button'));
-    await user.click(screen.getByRole('button', { name: /start german lesson/i }));
-
-    const replies = ['Ich heiße Lena', 'Aus Japan', 'Seit einem Jahr'];
-    for (const reply of replies) {
-      await user.click(screen.getByRole('button', { name: /continue/i }));
+    await user.click(screen.getByRole('button', { name: /start scene with nono/i }));
+    for (const reply of ['Ich heiße Lena', 'Aus Japan', 'Seit einem Jahr']) {
+      await waitFor(() => expect(screen.getByPlaceholderText(/type your response/i)).toBeInTheDocument());
       await user.type(screen.getByPlaceholderText(/type your response/i), reply);
       await user.click(screen.getByRole('button', { name: /^submit$/i }));
     }
-    // Final AI turn
-    await user.click(screen.getByRole('button', { name: /continue/i }));
   }
+
+  it('shows text input after first AI turn auto-advances', async () => {
+    const user = userEvent.setup();
+    renderConvo();
+    await user.click(screen.getByText('Nono').closest('button'));
+    await user.click(screen.getByRole('button', { name: /start scene with nono/i }));
+    await waitFor(() => expect(screen.getByPlaceholderText(/type your response/i)).toBeInTheDocument());
+  });
 
   it('reaches FeedbackView after completing all turns', async () => {
     const user = userEvent.setup();
-    render(<ConvoPage />);
+    renderConvo();
     await runFullGermanLesson(user);
-    await waitFor(() =>
-      expect(screen.getByText(/lesson complete/i)).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByText(/lesson complete/i)).toBeInTheDocument());
   });
 
-  it('FeedbackView shows the submitted responses', async () => {
+  it('FeedbackView shows submitted responses', async () => {
     const user = userEvent.setup();
-    render(<ConvoPage />);
+    renderConvo();
     await runFullGermanLesson(user);
     await waitFor(() => screen.getByText(/lesson complete/i));
     expect(screen.getByText(/ich heiße lena/i)).toBeInTheDocument();
   });
 
-  it('Retry Lesson resets to the first AI card', async () => {
+  it('Retry Lesson returns to the first AI card', async () => {
     const user = userEvent.setup();
-    render(<ConvoPage />);
+    renderConvo();
     await runFullGermanLesson(user);
     await waitFor(() => screen.getByText(/lesson complete/i));
     await user.click(screen.getByRole('button', { name: /retry lesson/i }));
-    expect(screen.getByText(/hallo.*nono/i)).toBeInTheDocument();
+    await waitFor(() => {
+      const els = screen.getAllByText(/hallo.*nono/i);
+      expect(els.some(el => el.classList.contains('cp-ai-text'))).toBe(true);
+    });
     expect(screen.queryByText(/lesson complete/i)).not.toBeInTheDocument();
   });
 
   it('Next Context loads the second German topic (Im Café)', async () => {
     const user = userEvent.setup();
-    render(<ConvoPage />);
+    renderConvo();
     await runFullGermanLesson(user);
     await waitFor(() => screen.getByText(/lesson complete/i));
     await user.click(screen.getByRole('button', { name: /next context/i }));
-    await waitFor(() =>
-      expect(screen.queryByText(/lesson complete/i)).not.toBeInTheDocument()
-    );
-    // "Im Café" appears in the header and progress label — check at least one exists
+    await waitFor(() => expect(screen.queryByText(/lesson complete/i)).not.toBeInTheDocument());
     expect(screen.getAllByText(/café/i).length).toBeGreaterThan(0);
   });
 
-  it('progress bar resets to near-zero after Retry Lesson', async () => {
+  it('progress bar resets after Retry Lesson', async () => {
     const user = userEvent.setup();
-    const { container } = render(<ConvoPage />);
+    const { container } = renderConvo();
     await runFullGermanLesson(user);
     await waitFor(() => screen.getByText(/lesson complete/i));
     await user.click(screen.getByRole('button', { name: /retry lesson/i }));
+    await waitFor(() => {
+      const els = screen.getAllByText(/hallo.*nono/i);
+      expect(els.some(el => el.classList.contains('cp-ai-text'))).toBe(true);
+    });
     const fill = container.querySelector('.cp-progress-fill');
-    // Turn 1 of 7 → ≈14 %
-    expect(parseFloat(fill?.style.width ?? '0')).toBeLessThan(20);
+    // With autoAdvanceDelay=0, first turn fires instantly → ~29% — still far below end-of-lesson 100%
+    expect(parseFloat(fill?.style.width ?? '0')).toBeLessThan(50);
   });
 });

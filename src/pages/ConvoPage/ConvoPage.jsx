@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { SCRIPTS } from './data/scripts';
 import { CHARACTER_MAP } from './data/characters';
+import { useSettings } from '../../context/SettingsContext';
 import SelectionModal from './SelectionModal';
 import ScriptModal from './ScriptModal';
 import ConvoHeader from './ConvoHeader';
@@ -16,10 +17,12 @@ import './ConvoPage.css';
  *   'convo'    — active turn-based conversation
  *   'feedback' — lesson complete, show summary
  */
-export default function ConvoPage() {
-  /* ── Core state ─────────────────────────────────────────── */
+export default function ConvoPage({ autoAdvanceDelay = 1800 } = {}) {
+  const { language, speakWithLocale } = useSettings();
+
+  /* ── Core state ─────────────────────────────────── */
   const [phase,          setPhase]          = useState('select');  // 'select'|'convo'|'feedback'
-  const [selectedLang,   setSelectedLang]   = useState('de');
+  const [selectedLang,   setSelectedLang]   = useState(language);  // follows settings on start
   const [selectedCharId, setSelectedCharId] = useState(null);
   const [scriptTopicIdx, setScriptTopicIdx] = useState(0);
   const [turnIndex,      setTurnIndex]      = useState(0);
@@ -27,6 +30,12 @@ export default function ConvoPage() {
   const [showScript,     setShowScript]     = useState(false);
 
   const bottomRef = useRef(null);
+
+  /* Speak callback — uses Settings voice for the selected lesson language */
+  const onSpeak = useCallback(
+    (text) => speakWithLocale(text, selectedLang),
+    [speakWithLocale, selectedLang]
+  );
 
   /* ── Derived values ─────────────────────────────────────── */
   const character = selectedCharId ? CHARACTER_MAP[selectedCharId] : null;
@@ -143,6 +152,8 @@ export default function ConvoPage() {
             charAvatar={character?.avatar ?? '🤖'}
             voiceLocale={character?.voiceLocale ?? 'en-US'}
             lang={selectedLang}
+            autoAdvanceDelay={autoAdvanceDelay}
+            onSpeak={onSpeak}
             onAiContinue={handleAiContinue}
             onUserSubmit={handleUserSubmit}
           />

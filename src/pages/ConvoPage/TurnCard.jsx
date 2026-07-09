@@ -5,38 +5,8 @@ import {
   Square,
   RotateCcw,
   CheckCircle,
-  ArrowRight,
 } from 'lucide-react';
 import { useSpeechRecognition } from './hooks/useSpeechRecognition';
-
-/* ── TTS helper ─────────────────────────────────────────────── */
-function speak(text, locale) {
-  if (!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-
-  const utter = new SpeechSynthesisUtterance(text);
-  utter.lang = locale;
-  utter.rate = 0.88;
-
-  function doSpeak() {
-    const voices = window.speechSynthesis.getVoices();
-    const voice =
-      voices.find((v) => v.lang === locale) ||
-      voices.find((v) => v.lang.startsWith(locale.split('-')[0]));
-    if (voice) utter.voice = voice;
-    window.speechSynthesis.speak(utter);
-  }
-
-  const voices = window.speechSynthesis.getVoices();
-  if (voices.length > 0) {
-    doSpeak();
-  } else {
-    window.speechSynthesis.addEventListener('voiceschanged', function onVC() {
-      doSpeak();
-      window.speechSynthesis.removeEventListener('voiceschanged', onVC);
-    });
-  }
-}
 
 /* ═══════════════════════════════════════════════════════════════
    UserTurnInput — handles mic / fallback text input for user turns
@@ -187,6 +157,9 @@ function UserTurnInput({ lang, hint, onSubmit }) {
    TurnCard — renders one conversation turn (AI or User)
    ═══════════════════════════════════════════════════════════════ */
 
+/** How long (ms) to wait before auto-advancing an AI turn */
+const AI_ADVANCE_DELAY = 1800;
+
 /**
  * @param {{
  *   turn: { speaker: 'ai'|'user', text?: string, hint?: string },
@@ -197,6 +170,7 @@ function UserTurnInput({ lang, hint, onSubmit }) {
  *   charAvatar: string,
  *   voiceLocale: string,
  *   lang: string,
+ *   turnIdx: number,
  *   onAiContinue: () => void,
  *   onUserSubmit: (text: string) => void,
  * }} props
@@ -213,9 +187,21 @@ export default function TurnCard({
   turnIdx,
   onAiContinue,
   onUserSubmit,
+  onSpeak,
+  autoAdvanceDelay = 1800,
 }) {
   const isAi   = turn.speaker === 'ai';
   const isUser = turn.speaker === 'user';
+
+  /* ── Auto-advance AI turns after a short reading delay ── */
+  useEffect(() => {
+    if (!isAi || !isActive) return;
+    const timer = setTimeout(() => {
+      onAiContinue();
+    }, autoAdvanceDelay);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAi, isActive, autoAdvanceDelay]);
 
   return (
     <div
@@ -239,7 +225,7 @@ export default function TurnCard({
         {isAi && (
           <button
             className="cp-tts-btn"
-            onClick={() => speak(turn.text, voiceLocale)}
+            onClick={() => onSpeak?.(turn.text)}
             aria-label="Play audio"
             id={`convo-tts-btn-${turnIdx}`}
           >
@@ -253,14 +239,9 @@ export default function TurnCard({
       {isAi && (
         <>
           <p className="cp-ai-text">{turn.text}</p>
+          {/* Subtle auto-advance indicator while active */}
           {isActive && (
-            <button
-              className="cp-continue-btn"
-              onClick={onAiContinue}
-              id="convo-continue-btn"
-            >
-              Continue <ArrowRight size={16} />
-            </button>
+            <span className="cp-auto-next" aria-hidden="true" />
           )}
         </>
       )}
