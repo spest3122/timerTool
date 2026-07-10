@@ -51,7 +51,8 @@ function UserTurnInput({ lang, hint, onSubmit }) {
     reset();
     setDraft('');
     setCaptureReady(false);
-  }, [reset]);
+    start();
+  }, [reset, start]);
 
   const handleSubmitMic = useCallback(() => {
     if (draft.trim()) onSubmit(draft.trim());
@@ -193,15 +194,42 @@ export default function TurnCard({
   const isAi   = turn.speaker === 'ai';
   const isUser = turn.speaker === 'user';
 
-  /* ── Auto-advance AI turns after a short reading delay ── */
+  /* ── Auto-advance AI turns after speech or reading delay ── */
   useEffect(() => {
     if (!isAi || !isActive) return;
-    const timer = setTimeout(() => {
+
+    let fallbackTimer = null;
+
+    const handleSpeechEnd = (e) => {
+      if (e && e.type === 'error' && e.error === 'interrupted') {
+        return;
+      }
       onAiContinue();
-    }, autoAdvanceDelay);
-    return () => clearTimeout(timer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAi, isActive, autoAdvanceDelay]);
+    };
+
+    if (typeof speechSynthesis === 'undefined') {
+      fallbackTimer = setTimeout(() => {
+        onAiContinue();
+      }, autoAdvanceDelay);
+    } else {
+      // Autoplay the sounds
+      onSpeak?.(turn.text, handleSpeechEnd);
+
+      // Safety fallback timer: in case speech synthesis is blocked, unsupported, or takes too long,
+      // we set a safety timeout (e.g. at least 6 seconds, or 100ms per character).
+      const estimatedDuration = Math.max(6000, turn.text.length * 100);
+      fallbackTimer = setTimeout(() => {
+        try {
+          speechSynthesis.cancel();
+        } catch (e) {}
+        onAiContinue();
+      }, estimatedDuration);
+    }
+
+    return () => {
+      if (fallbackTimer) clearTimeout(fallbackTimer);
+    };
+  }, [isAi, isActive, turn.text, onSpeak, onAiContinue, autoAdvanceDelay]);
 
   return (
     <div

@@ -33,7 +33,7 @@ export default function ConvoPage({ autoAdvanceDelay = 1800 } = {}) {
 
   /* Speak callback — uses Settings voice for the selected lesson language */
   const onSpeak = useCallback(
-    (text) => speakWithLocale(text, selectedLang),
+    (text, onEnd) => speakWithLocale(text, selectedLang, onEnd),
     [speakWithLocale, selectedLang]
   );
 

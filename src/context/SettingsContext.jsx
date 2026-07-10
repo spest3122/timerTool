@@ -67,8 +67,13 @@ export function SettingsProvider({ children }) {
    * @param {string} text  - The text to speak
    * @param {string} lang  - Language code: 'de' | 'en' | 'es'
    */
-  const speakWithLocale = useCallback((text, lang) => {
+  const speakWithLocale = useCallback((text, lang, onEnd) => {
     if (typeof speechSynthesis === 'undefined') return
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('convo-tts-play'));
+    }
+
     speechSynthesis.cancel()
     const all = speechSynthesis.getVoices()
     // Get voices for this specific lang
@@ -78,6 +83,12 @@ export function SettingsProvider({ children }) {
     const idx   = saved !== null ? parseInt(saved, 10) : -1
     const utterance = new SpeechSynthesisUtterance(text)
     utterance.rate  = 0.88
+
+    if (onEnd) {
+      utterance.onend = onEnd;
+      utterance.onerror = onEnd;
+    }
+
     if (idx >= 0 && voices[idx]) {
       utterance.voice = voices[idx]
       utterance.lang  = voices[idx].lang
@@ -90,7 +101,11 @@ export function SettingsProvider({ children }) {
       else utterance.lang = locale
     }
 
-    function doSpeak() { speechSynthesis.speak(utterance) }
+    function doSpeak() {
+      setTimeout(() => {
+        speechSynthesis.speak(utterance)
+      }, 50)
+    }
     if (all.length > 0) {
       doSpeak()
     } else {

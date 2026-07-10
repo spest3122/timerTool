@@ -25,6 +25,9 @@ export function useSpeechRecognition(lang = 'en-US') {
   const [transcript, setTranscript] = useState('');
   const [isFinal, setIsFinal] = useState(false);
   const recRef = useRef(null);
+  const explicitlyStoppedRef = useRef(false);
+  const lastErrorRef = useRef(null);
+  const transcriptRef = useRef('');
 
   const isSupported = Boolean(SR);
 
@@ -38,6 +41,7 @@ export function useSpeechRecognition(lang = 'en-US') {
     };
   }, []);
 
+
   const start = useCallback(() => {
     if (!SR) return;
 
@@ -49,6 +53,9 @@ export function useSpeechRecognition(lang = 'en-US') {
 
     setTranscript('');
     setIsFinal(false);
+    transcriptRef.current = '';
+    explicitlyStoppedRef.current = false;
+    lastErrorRef.current = null;
 
     const rec = new SR();
     rec.lang = lang;
@@ -69,16 +76,32 @@ export function useSpeechRecognition(lang = 'en-US') {
       }
 
       setTranscript(combinedText);
+      transcriptRef.current = combinedText;
       if (gotFinal) setIsFinal(true);
     };
 
     rec.onerror = (event) => {
       console.warn('[SpeechRecognition] Error:', event.error);
+      lastErrorRef.current = event.error;
       setIsListening(false);
     };
 
     rec.onend = () => {
       setIsListening(false);
+
+      const wasNoSpeech = lastErrorRef.current === 'no-speech';
+      const wasAborted = lastErrorRef.current === 'aborted';
+      const hadOtherError = lastErrorRef.current !== null && !wasNoSpeech;
+      const isSilentEnd = !transcriptRef.current && !wasAborted && !hadOtherError;
+
+      if (!explicitlyStoppedRef.current && (wasNoSpeech || isSilentEnd)) {
+        console.log('[SpeechRecognition] Silent timeout/no-speech detected. Auto-restarting...');
+        setTimeout(() => {
+          if (!explicitlyStoppedRef.current) {
+            start();
+          }
+        }, 100);
+      }
     };
 
     recRef.current = rec;
@@ -86,12 +109,14 @@ export function useSpeechRecognition(lang = 'en-US') {
   }, [lang]);
 
   const stop = useCallback(() => {
+    explicitlyStoppedRef.current = true;
     if (recRef.current) {
       recRef.current.stop(); // triggers onend → setIsListening(false)
     }
   }, []);
 
   const reset = useCallback(() => {
+    explicitlyStoppedRef.current = true;
     if (recRef.current) {
       recRef.current.abort();
       recRef.current = null;
@@ -100,6 +125,19 @@ export function useSpeechRecognition(lang = 'en-US') {
     setIsFinal(false);
     setIsListening(false);
   }, []);
+
+  /* Stop listening if text-to-speech begins playing */
+  useEffect(() => {
+    const handlePlayTTS = () => {
+      if (isListening) {
+        stop();
+      }
+    };
+    window.addEventListener('convo-tts-play', handlePlayTTS);
+    return () => {
+      window.removeEventListener('convo-tts-play', handlePlayTTS);
+    };
+  }, [isListening, stop]);
 
   return { isSupported, isListening, transcript, isFinal, start, stop, reset };
 }

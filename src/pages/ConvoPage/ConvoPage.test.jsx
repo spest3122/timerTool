@@ -74,7 +74,12 @@ function withSettings(ui, langOverride = 'de') {
 // ── speechSynthesis helpers ──────────────────────────────────────────────────
 function installSynthMock() {
   const mock = {
-    cancel: vi.fn(), speak: vi.fn(),
+    cancel: vi.fn(),
+    speak: vi.fn((utterance) => {
+      setTimeout(() => {
+        utterance.onend?.();
+      }, 0);
+    }),
     getVoices: vi.fn(() => [{ lang: 'de-DE' }, { lang: 'en-US' }, { lang: 'es-ES' }]),
     addEventListener: vi.fn(), removeEventListener: vi.fn(),
   };
@@ -83,7 +88,17 @@ function installSynthMock() {
 }
 function removeSynthMock() {
   Object.defineProperty(window, 'speechSynthesis', {
-    value: { cancel: vi.fn(), speak: vi.fn(), getVoices: () => [], addEventListener: vi.fn(), removeEventListener: vi.fn() },
+    value: {
+      cancel: vi.fn(),
+      speak: vi.fn((utterance) => {
+        setTimeout(() => {
+          utterance.onend?.();
+        }, 0);
+      }),
+      getVoices: () => [],
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn()
+    },
     writable: true, configurable: true,
   });
 }
@@ -336,7 +351,9 @@ describe('ConvoHeader', () => {
 // ════════════════════════════════════════════════════════════════════════════
 describe('TurnCard — AI turn', () => {
   let synth;
-  const onSpeak = vi.fn();
+  const onSpeak = vi.fn((text, onEnd) => {
+    if (onEnd) setTimeout(onEnd, 0);
+  });
   const aiProps = {
     turn: { speaker: 'ai', text: 'Hello! How are you?' }, turnIdx: 0,
     isActive: true, isDone: false, submittedText: undefined,
@@ -467,12 +484,13 @@ describe('TurnCard — User turn (mic path)', () => {
     expect(fn).toHaveBeenCalledWith('my answer');
   });
 
-  it('calls reset() when Record Again clicked', async () => {
-    const user = userEvent.setup(); const resetFn = vi.fn();
-    setSRState({ isSupported: true, isListening: false, transcript: 'oops', isFinal: true, reset: resetFn });
+  it('calls reset() and start() when Record Again clicked', async () => {
+    const user = userEvent.setup(); const resetFn = vi.fn(); const startFn = vi.fn();
+    setSRState({ isSupported: true, isListening: false, transcript: 'oops', isFinal: true, reset: resetFn, start: startFn });
     render(<TurnCard {...userProps} />);
     await user.click(screen.getByRole('button', { name: /record again/i }));
     expect(resetFn).toHaveBeenCalled();
+    expect(startFn).toHaveBeenCalled();
   });
 });
 
