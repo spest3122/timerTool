@@ -5,4 +5,9 @@ description: Triggers when the user asks to write code, modify files, or impleme
 
 # Planning
 
-Before you write code make a plan.
+Before you do **anything** — writing code, fixing bugs, modifying files, or implementing features — you MUST create a plan first.
+
+- **Always stop and plan** before taking any action that changes the codebase.
+- Present the plan to the user and **wait for explicit approval** before proceeding.
+- Do not write a single line of code or make any file modifications until the user approves the plan.
+- **Always run tests** to verify correctness and check for regressions after changing the codebase.
