@@ -2,7 +2,7 @@
 #drawerOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.32);
+  background: rgba(15, 15, 15, 0.25);
   z-index: 300;
   opacity: 0;
   pointer-events: none;
@@ -21,8 +21,8 @@
   height: 100%;
   width: 320px;
   max-width: 92vw;
-  background: #fff;
-  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+  background: var(--canvas);
+  border-left: 1px solid var(--hairline);
   z-index: 400;
   transform: translateX(100%);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -39,33 +39,36 @@
   align-items: center;
   justify-content: space-between;
   padding: 18px 20px 14px;
-  border-bottom: 1px solid #e8eaed;
-  background: #1976d2;
-  color: white;
+  border-bottom: 1px solid var(--hairline);
+  background: var(--surface);
+  color: var(--ink);
 }
 .drawer-header h2 {
   margin: 0;
+  font-family: var(--font-display);
   font-size: 17px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
 }
 #drawerCloseBtn {
-  background: rgba(255, 255, 255, 0.18);
-  border: none;
-  border-radius: 6px;
-  color: white;
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: var(--rounded-full);
+  color: var(--ink);
   width: 34px;
   height: 34px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
-  line-height: 1;
-  transition: background 0.15s;
+  font-size: 16px;
+  transition: background 0.15s, transform 0.1s;
 }
 #drawerCloseBtn:hover {
-  background: rgba(255, 255, 255, 0.32);
+  background: var(--surface);
+}
+#drawerCloseBtn:active {
+  transform: scale(0.95);
 }
 
 /* ── Drawer body ── */
@@ -79,43 +82,55 @@
 }
 
 .drawer-section-title {
-  font-size: 12px;
-  font-weight: 700;
+  font-family: var(--font-text);
+  font-size: 11px;
+  font-weight: 600;
   text-transform: uppercase;
-  color: #999;
+  color: var(--slate);
   letter-spacing: 0.8px;
   margin-bottom: -8px;
 }
 
 .drawer-field label {
   display: block;
+  font-family: var(--font-text);
   font-size: 11px;
   text-transform: uppercase;
-  color: #666;
+  color: var(--slate);
   margin-bottom: 7px;
-  font-weight: bold;
+  font-weight: 600;
   letter-spacing: 0.5px;
 }
 .drawer-field select {
   width: 100%;
   padding: 9px 10px;
-  border-radius: 7px;
-  border: 1px solid #ccc;
-  background: #fafafa;
+  border-radius: var(--rounded-md);
+  border: 1px solid var(--hairline-strong);
+  background: var(--canvas);
+  color: var(--ink);
   font-size: 14px;
   cursor: pointer;
   box-sizing: border-box;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, transform 0.1s;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2337352f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 15px;
 }
 .drawer-field select:focus {
-  outline: none;
-  border-color: #1976d2;
-  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.15);
+  border-width: 2px;
+  border-color: var(--primary);
+}
+.drawer-field select:active {
+  transform: scale(0.98);
 }
 
 .drawer-divider {
   height: 1px;
-  background: #e8eaed;
+  background: var(--hairline);
   margin: 0 -20px;
 }
 

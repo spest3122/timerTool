@@ -16,11 +16,15 @@ The website structure is made up of three main components:
 
 ## TODO
 
-- [ ] add Design System
-- [ ] add data on Vocab page
+- [] add data on Vocab page
+- [] add quiz about time
+- [] add quiz about season
+- [] add quiz about weeks
+- [] add quiz about days/months/years
 
 ## DONE
 
+- [O] add Design System
 - [O] rewrite this project with React
 - [O] add testing
 - [O] add Match with picture and text
