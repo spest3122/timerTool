@@ -11,3 +11,5 @@ Before you do **anything** — writing code, fixing bugs, modifying files, or im
 - Present the plan to the user and **wait for explicit approval** before proceeding.
 - Do not write a single line of code or make any file modifications until the user approves the plan.
 - **Always run tests** to verify correctness and check for regressions after changing the codebase.
+- Before analyzing the code, check if `nvm` is available. If it is, switch to the latest Node.js version.
+- This project only accepts Node.js version 22 and above.
