@@ -14,6 +14,8 @@ describe('NavSidebar Component', () => {
     expect(screen.getByLabelText(/Timer/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/German Quiz/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/Speaker practice/i)).toBeInTheDocument()
+    expect(screen.queryByLabelText(/Language conversation/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Convo/i)).not.toBeInTheDocument()
   })
 
   it('highlights the active link', () => {

@@ -1,0 +1,23 @@
+import { Navigate } from "react-router";
+import App from "./App";
+import TimerPage from "./pages/TimerPage/TimerPage";
+import QuizPage from "./pages/QuizPage/QuizPage";
+import SpeakerPage from "./pages/SpeakerPage/SpeakerPage";
+import VocabPage from "./pages/VocabPage/VocabPage";
+import RecorderPage from "./pages/RecorderPage/RecorderPage";
+import ConvoPage from "./pages/ConvoPage/ConvoPage";
+
+export const routes = [
+  {
+    path: "/",
+    element: <App />,
+    children: [
+      { index: true, element: <TimerPage /> },
+      { path: "quiz", element: <QuizPage /> },
+      { path: "speaker", element: <SpeakerPage /> },
+      { path: "vocab", element: <VocabPage /> },
+      { path: "recorder", element: <RecorderPage /> },
+      { path: "convo", element: <Navigate to="/" replace /> },
+    ],
+  },
+];
