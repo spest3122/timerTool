@@ -74,4 +74,14 @@ describe('SettingsContext', () => {
     expect(global.speechSynthesis.speak).toHaveBeenCalled()
     // It should fallback to correct lang based on current language
   })
+
+  it('does not expose speakWithLocale in context values', () => {
+    let contextValues
+    const Probe = () => {
+      contextValues = useSettings()
+      return null
+    }
+    render(<SettingsProvider><Probe /></SettingsProvider>)
+    expect(contextValues.speakWithLocale).toBeUndefined()
+  })
 })

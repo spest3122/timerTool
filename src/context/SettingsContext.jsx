@@ -59,67 +59,6 @@ export function SettingsProvider({ children }) {
     speechSynthesis.speak(utterance)
   }, [selectedVoiceIndex, filteredVoices, language])
 
-  /**
-   * Speak with a specific language's saved voice preference.
-   * Used by ConvoPage so TTS respects the voice saved for that lesson language,
-   * even if it differs from the global UI language.
-   *
-   * @param {string} text  - The text to speak
-   * @param {string} lang  - Language code: 'de' | 'en' | 'es'
-   */
-  const speakWithLocale = useCallback((text, lang, onEnd) => {
-    if (typeof speechSynthesis === 'undefined') return
-
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('convo-tts-play'));
-    }
-
-    speechSynthesis.cancel()
-    const all = speechSynthesis.getVoices()
-    // Get voices for this specific lang
-    const voices = all.filter(v => v.lang.startsWith(lang + '-') || v.lang.toLowerCase() === lang)
-    // Check for a saved preference for this lang
-    const saved = localStorage.getItem(`timerTool_voice_${lang}`)
-    const idx   = saved !== null ? parseInt(saved, 10) : -1
-    const utterance = new SpeechSynthesisUtterance(text)
-    utterance.rate  = 0.88
-
-    if (onEnd) {
-      utterance.onend = onEnd;
-      utterance.onerror = onEnd;
-    }
-
-    if (idx >= 0 && voices[idx]) {
-      utterance.voice = voices[idx]
-      utterance.lang  = voices[idx].lang
-    } else {
-      // Locale fallback
-      const localeMap = { de: 'de-DE', en: 'en-US', es: 'es-ES' }
-      const locale = localeMap[lang] ?? 'en-US'
-      const fallback = all.find(v => v.lang === locale) ?? all.find(v => v.lang.startsWith(lang))
-      if (fallback) { utterance.voice = fallback; utterance.lang = fallback.lang }
-      else utterance.lang = locale
-    }
-
-    function doSpeak() {
-      setTimeout(() => {
-        speechSynthesis.speak(utterance)
-      }, 50)
-    }
-    if (all.length > 0) {
-      doSpeak()
-    } else {
-      speechSynthesis.addEventListener('voiceschanged', function onVC() {
-        // Re-resolve voices after they load
-        const all2 = speechSynthesis.getVoices()
-        const v2 = all2.filter(v => v.lang.startsWith(lang + '-'))
-        if (idx >= 0 && v2[idx]) { utterance.voice = v2[idx]; utterance.lang = v2[idx].lang }
-        doSpeak()
-        speechSynthesis.removeEventListener('voiceschanged', onVC)
-      })
-    }
-  }, [])
-
   return (
     <SettingsContext.Provider value={{
       language,
@@ -128,7 +67,6 @@ export function SettingsProvider({ children }) {
       selectedVoiceIndex,
       setSelectedVoiceIndex,
       speak,
-      speakWithLocale,
     }}>
       {children}
     </SettingsContext.Provider>
