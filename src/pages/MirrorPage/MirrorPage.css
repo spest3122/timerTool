@@ -221,6 +221,231 @@
   gap: 12px;
 }
 
+/* Square 3: Recording Console styles */
+.controls-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  background: var(--surface-soft);
+  border-radius: var(--rounded-md);
+  text-align: center;
+}
+
+.recording-timer {
+  font-family: var(--font-code);
+  font-size: 38px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: 2px;
+  margin: 12px 0;
+}
+
+.recording-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: var(--rounded-lg);
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.status-idle {
+  background: var(--surface);
+  color: var(--slate);
+}
+
+.status-recording {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+}
+
+.status-paused {
+  background: #fef3c7;
+  color: #d97706;
+  border: 1px solid #fde68a;
+}
+
+.pulse-dot {
+  width: 10px;
+  height: 10px;
+  background: #dc2626;
+  border-radius: 50%;
+  animation: pulse-ring 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse-ring {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.3); }
+}
+
+.controls-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.btn-record {
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  border-radius: var(--rounded-md);
+  padding: 10px 22px;
+  font-family: var(--font-text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.15s ease;
+}
+
+.btn-record:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.btn-record:disabled {
+  background: var(--hairline-strong);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.btn-danger {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  border-radius: var(--rounded-md);
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-danger:hover {
+  background: #fecaca;
+}
+
+.controls-hint {
+  font-size: 12px;
+  color: var(--slate);
+  margin-top: 12px;
+}
+
+/* Square 4: Replay Library styles */
+.replay-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.replay-player-wrapper {
+  background: #000;
+  border-radius: var(--rounded-md);
+  overflow: hidden;
+  max-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.replay-player {
+  width: 100%;
+  max-height: 220px;
+  display: block;
+}
+
+.replay-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-soft);
+  border: 1px dashed var(--hairline);
+  border-radius: var(--rounded-md);
+  padding: 24px;
+  color: var(--slate);
+  font-size: 14px;
+  text-align: center;
+}
+
+.takes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+}
+
+.takes-count {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--charcoal);
+}
+
+.takes-list {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 4px;
+}
+
+.take-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--rounded-md);
+  padding: 10px 12px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.take-item:hover {
+  background: var(--surface-soft);
+  border-color: var(--slate);
+}
+
+.take-item.active-take {
+  border-color: var(--primary);
+  background: #f0effc;
+}
+
+.take-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.take-time {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.take-duration {
+  font-size: 12px;
+  color: var(--slate);
+}
+
+.take-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* Mobile responsive collapse */
 @media (max-width: 768px) {
   .mirror-page {

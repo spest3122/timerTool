@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SettingsProvider } from '../../context/SettingsContext';
 import MirrorPage from './MirrorPage';
@@ -118,6 +118,106 @@ describe('MirrorPage Component', () => {
       expect(mockSpeak).toHaveBeenCalled();
       const utterance = mockSpeak.mock.calls[0][0];
       expect(utterance.text).toBe('Hallo Welt');
+    });
+  });
+
+  describe('Square 3 & 4: Recording Controls and Replay Library', () => {
+    let mockMediaRecorderInstance;
+
+    beforeEach(() => {
+      global.URL.createObjectURL = vi.fn(() => 'blob:mock-video-url');
+      global.URL.revokeObjectURL = vi.fn();
+
+      class MockMediaRecorder {
+        constructor(stream) {
+          this.stream = stream;
+          this.state = 'inactive';
+          this.ondataavailable = null;
+          this.onstop = null;
+          mockMediaRecorderInstance = this;
+        }
+        start() {
+          this.state = 'recording';
+        }
+        pause() {
+          this.state = 'paused';
+        }
+        resume() {
+          this.state = 'recording';
+        }
+        stop() {
+          this.state = 'inactive';
+          if (this.ondataavailable) {
+            this.ondataavailable({ data: new Blob(['video payload'], { type: 'video/webm' }) });
+          }
+          if (this.onstop) {
+            this.onstop();
+          }
+        }
+      }
+      global.MediaRecorder = MockMediaRecorder;
+    });
+
+    it('disables Record button when camera is inactive and enables it when camera starts', async () => {
+      render(<MirrorPage />);
+
+      const recordBtn = screen.getByRole('button', { name: /^Record$/i });
+      expect(recordBtn).toBeDisabled();
+      expect(screen.getByText(/Enable camera to start recording/i)).toBeInTheDocument();
+
+      const mockStream = {
+        getTracks: vi.fn().mockReturnValue([{ stop: vi.fn() }]),
+      };
+      Object.defineProperty(global.navigator, 'mediaDevices', {
+        value: { getUserMedia: vi.fn().mockResolvedValue(mockStream) },
+        configurable: true,
+        writable: true,
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: /Enable Camera/i }));
+
+      await screen.findByTestId('mirror-video');
+      expect(recordBtn).not.toBeDisabled();
+    });
+
+    it('records a take and displays it in the Replay Library', async () => {
+      const mockStream = {
+        getTracks: vi.fn().mockReturnValue([{ stop: vi.fn() }]),
+      };
+      Object.defineProperty(global.navigator, 'mediaDevices', {
+        value: { getUserMedia: vi.fn().mockResolvedValue(mockStream) },
+        configurable: true,
+        writable: true,
+      });
+
+      render(<MirrorPage />);
+
+      fireEvent.click(screen.getByRole('button', { name: /Enable Camera/i }));
+      await screen.findByTestId('mirror-video');
+
+      const recordBtn = screen.getByRole('button', { name: /^Record$/i });
+      fireEvent.click(recordBtn);
+
+      // Status switches to recording
+      expect(screen.getByText(/Recording Take/i)).toBeInTheDocument();
+      const stopBtn = screen.getByRole('button', { name: /Stop/i });
+      expect(stopBtn).toBeInTheDocument();
+
+      // Stop recording
+      fireEvent.click(stopBtn);
+
+      // Take should appear in Square 4
+      const takeItem = await screen.findByTestId(/take-item-/i);
+      expect(takeItem).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Download Take/i })).toBeInTheDocument();
+
+      // Delete take
+      const deleteBtn = screen.getByRole('button', { name: /Delete Take/i });
+      fireEvent.click(deleteBtn);
+
+      await waitFor(() => {
+        expect(screen.queryByTestId(/take-item-/i)).not.toBeInTheDocument();
+      });
     });
   });
 });
