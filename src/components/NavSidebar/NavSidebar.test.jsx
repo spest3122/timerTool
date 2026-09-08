@@ -16,6 +16,7 @@ describe('NavSidebar Component', () => {
     expect(screen.getByLabelText(/Speaker practice/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/Vocabulary trainer/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/Voice recorder/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/Mirror practice/i)).toBeInTheDocument()
     expect(screen.queryByLabelText(/Language conversation/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/Convo/i)).not.toBeInTheDocument()
   })

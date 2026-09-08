@@ -5,6 +5,7 @@ import QuizPage from "./pages/QuizPage/QuizPage";
 import SpeakerPage from "./pages/SpeakerPage/SpeakerPage";
 import VocabPage from "./pages/VocabPage/VocabPage";
 import RecorderPage from "./pages/RecorderPage/RecorderPage";
+import MirrorPage from "./pages/MirrorPage/MirrorPage";
 
 export const routes = [
   {
@@ -16,6 +17,7 @@ export const routes = [
       { path: "speaker", element: <SpeakerPage /> },
       { path: "vocab", element: <VocabPage /> },
       { path: "recorder", element: <RecorderPage /> },
+      { path: "mirror", element: <MirrorPage /> },
       { path: "convo", element: <Navigate to="/" replace /> },
     ],
   },

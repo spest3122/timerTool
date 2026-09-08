@@ -24,6 +24,10 @@ _Avoid_: Wordlist, dictionary
 An audio recording and playback tool for capturing and self-evaluating spoken language practice.
 _Avoid_: Voice memo, dictaphone
 
+**Mirror**:
+A visual rehearsal tool combining live webcam video, reference script text, recording controls, and take history for articulation practice.
+_Avoid_: Talk to the mirror, webcam recorder, video memo
+
 ## Retired Terms
 
 **Convo**:

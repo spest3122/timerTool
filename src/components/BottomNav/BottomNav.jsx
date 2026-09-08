@@ -72,6 +72,21 @@ const RecorderIcon = () => (
   </svg>
 );
 
+const MirrorIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <circle cx="12" cy="10" r="7" />
+    <path d="M12 17v4" />
+    <path d="M8 21h8" />
+  </svg>
+);
+
 export default function BottomNav() {
   const cls = ({ isActive }) => `bottom-nav-item${isActive ? " active" : ""}`;
   return (
@@ -96,6 +111,11 @@ export default function BottomNav() {
       <NavLink to="/recorder" className={cls} aria-label="Recorder">
         <RecorderIcon />
         Recorder
+      </NavLink>
+
+      <NavLink to="/mirror" className={cls} aria-label="Mirror">
+        <MirrorIcon />
+        Mirror
       </NavLink>
     </>
   );

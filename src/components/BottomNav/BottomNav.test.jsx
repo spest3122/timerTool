@@ -15,6 +15,7 @@ describe('BottomNav Component', () => {
     expect(screen.getByLabelText(/Speaker/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/Vocab/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/Recorder/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/^Mirror$/i)).toBeInTheDocument()
     expect(screen.queryByLabelText(/^Convo$/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/^Convo$/i)).not.toBeInTheDocument()
   })

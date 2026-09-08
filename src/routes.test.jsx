@@ -18,4 +18,18 @@ describe('Application Routes', () => {
 
     expect(screen.getByLabelText('Analog clock')).toBeInTheDocument();
   });
+
+  it('renders the Mirror page on /mirror', () => {
+    const router = createMemoryRouter(routes, {
+      initialEntries: ['/mirror'],
+    });
+
+    render(
+      <SettingsProvider>
+        <RouterProvider router={router} />
+      </SettingsProvider>
+    );
+
+    expect(screen.getByTestId('mirror-page')).toBeInTheDocument();
+  });
 });
