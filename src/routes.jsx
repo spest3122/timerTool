@@ -5,7 +5,6 @@ import QuizPage from "./pages/QuizPage/QuizPage";
 import SpeakerPage from "./pages/SpeakerPage/SpeakerPage";
 import VocabPage from "./pages/VocabPage/VocabPage";
 import RecorderPage from "./pages/RecorderPage/RecorderPage";
-import ConvoPage from "./pages/ConvoPage/ConvoPage";
 
 export const routes = [
   {
