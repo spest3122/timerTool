@@ -75,13 +75,16 @@ describe('SettingsContext', () => {
     // It should fallback to correct lang based on current language
   })
 
-  it('does not expose speakWithLocale in context values', () => {
+  it('exposes only canonical settings methods and does not expose speakWithLocale', () => {
     let contextValues
     const Probe = () => {
       contextValues = useSettings()
       return null
     }
     render(<SettingsProvider><Probe /></SettingsProvider>)
+    expect(typeof contextValues.speak).toBe('function')
+    expect(typeof contextValues.setLanguage).toBe('function')
+    expect(typeof contextValues.setSelectedVoiceIndex).toBe('function')
     expect(contextValues.speakWithLocale).toBeUndefined()
   })
 })

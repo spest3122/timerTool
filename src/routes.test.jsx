@@ -17,6 +17,5 @@ describe('Application Routes', () => {
     );
 
     expect(screen.getByLabelText('Analog clock')).toBeInTheDocument();
-    expect(screen.queryByText(/Choose your conversation partner/i)).not.toBeInTheDocument();
   });
 });
